@@ -1,0 +1,20 @@
+# Archivo de traducción para el módulo TrelloGestiona
+ModuleName = TrelloGestiona
+ModuleDesc = Integración con el gestor de tareas Trello
+
+# Menús
+TrelloGestiona = Gestor Trello
+Dashboard = Tablero
+Automatizacion = Automatización
+Setup = Configuración
+
+# Botones y etiquetas
+SaveSettings = Guardar configuración
+StreamlitURL = URL de la aplicación Streamlit
+TrelloAPIKey = Clave API de Trello
+TrelloToken = Token de Trello
+SettingsSaved = Configuración guardada correctamente
+ConfigError = Error al guardar la configuración
+ConfigSuccess = Configuración guardada exitosamente
+RefreshData = Actualizar datos
+NoData = No hay datos disponibles
