@@ -497,12 +497,24 @@ if st.session_state.trello_data is not None:
                     # Convertir a datetime si aún no lo es
                     df_fechas_vencimiento['fecha_vencimiento'] = pd.to_datetime(df_fechas_vencimiento['fecha_vencimiento'])
                     
+                    # Crear una fecha de fin (requerida para la gráfica de línea de tiempo)
+                    # Añadiremos 1 día a la fecha de vencimiento para visualizar mejor
+                    df_fechas_vencimiento['fecha_fin'] = df_fechas_vencimiento['fecha_vencimiento'] + pd.Timedelta(days=1)
+                    
                     # Ordenar por fecha de vencimiento
                     df_fechas_vencimiento = df_fechas_vencimiento.sort_values('fecha_vencimiento')
                     
-                    fig5 = px.timeline(df_fechas_vencimiento, x_start='fecha_vencimiento', y='nombre',
-                                      color='prioridad', title='Línea de Tiempo de Tareas por Fecha de Vencimiento',
-                                      color_discrete_sequence=px.colors.qualitative.Pastel)
+                    # Asegurarse de que el nombre sea único para la visualización
+                    df_fechas_vencimiento['nombre_unico'] = df_fechas_vencimiento['nombre'] + ' (' + df_fechas_vencimiento.index.astype(str) + ')'
+                    
+                    # Usar gráfico de barras horizontales en lugar de timeline
+                    fig5 = px.bar(df_fechas_vencimiento, 
+                                  x='fecha_vencimiento', 
+                                  y='nombre',
+                                  color='prioridad', 
+                                  title='Tareas por Fecha de Vencimiento',
+                                  color_discrete_sequence=px.colors.qualitative.Pastel,
+                                  orientation='h')
                     
                     # Personalizar diseño
                     fig5.update_yaxes(autorange="reversed")
