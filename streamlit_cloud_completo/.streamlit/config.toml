@@ -1,0 +1,7 @@
+[theme]
+# Paleta de colores principal de VIAWEB
+primaryColor = "#543088"  # Morado principal
+backgroundColor = "#FFFFFF"  # Fondo blanco en modo claro
+secondaryBackgroundColor = "#B3BDD7"  # Gris azulado claro
+textColor = "#0E4895"  # Azul oscuro para texto
+font = "sans serif"
