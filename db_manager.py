@@ -33,7 +33,7 @@ def get_engine():
             )
             # Probar la conexión
             with engine.connect() as conn:
-                conn.execute(select([1]))
+                conn.execute(text("SELECT 1"))
             logger.info("Conexión a la base de datos establecida correctamente")
             return engine
         except Exception as e:
