@@ -44,6 +44,12 @@ if 'db_initialized' not in st.session_state:
     st.session_state.db_initialized = True
     st.success("Base de datos inicializada correctamente.")
 
+# Variables de sesión para la integración con Dolibarr
+if 'dolibarr_url' not in st.session_state:
+    st.session_state.dolibarr_url = os.environ.get('DOLIBARR_URL', '')
+if 'dolibarr_api_token' not in st.session_state:
+    st.session_state.dolibarr_api_token = os.environ.get('DOLIBARR_API_TOKEN', '')
+
 # Título y descripción
 st.title("Gestor de Tareas Trello")
 st.write("Procesá, organizá y gestioná tus tareas de Trello de manera eficiente con este sistema de flujo de trabajo simplificado.")
@@ -203,6 +209,243 @@ with st.sidebar:
 if st.session_state.trello_data is not None:
     # Pestañas para diferentes vistas
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Panel de Tareas", "Vista de Flujo", "Análisis", "Automatización", "Integración Dolibarr"])
+    
+    # Pestaña de Integración Dolibarr
+    with tab5:
+        st.header("Integración con Dolibarr ERP")
+        
+        # Sección de configuración
+        st.subheader("Configuración de la Conexión")
+        
+        with st.form("dolibarr_config_form"):
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                # URL de Dolibarr
+                dolibarr_url = st.text_input(
+                    "URL de Dolibarr",
+                    value=st.session_state.dolibarr_url,
+                    help="Dirección completa del servidor Dolibarr (ej: http://miservidor.com/dolibarr)"
+                )
+            
+            with col2:
+                # Token de API
+                dolibarr_api_token = st.text_input(
+                    "Token de API",
+                    value=st.session_state.dolibarr_api_token,
+                    type="password",
+                    help="Token de API generado en el módulo TrelloGestiona de Dolibarr"
+                )
+            
+            # Botón para guardar configuración
+            submit_button = st.form_submit_button("Guardar Configuración")
+            
+            if submit_button:
+                # Actualizar estado de la sesión
+                st.session_state.dolibarr_url = dolibarr_url
+                st.session_state.dolibarr_api_token = dolibarr_api_token
+                
+                # Crear o actualizar el cliente
+                if 'dolibarr_client' in st.session_state:
+                    del st.session_state.dolibarr_client
+                
+                st.success("Configuración guardada correctamente")
+                st.rerun()
+        
+        # Separador
+        st.divider()
+        
+        # Obtener el cliente de Dolibarr
+        dolibarr_client = get_dolibarr_client()
+        
+        # Verificar si el cliente está configurado
+        if not dolibarr_client.is_configured():
+            st.warning("Por favor, completa la configuración de conexión a Dolibarr.")
+        else:
+            # Menú de operaciones
+            st.subheader("Operaciones disponibles")
+            
+            # Definir pestañas para operaciones
+            op_tab1, op_tab2, op_tab3 = st.tabs(["Proyectos", "Tableros Vinculados", "Sincronización"])
+            
+            # Pestaña de Proyectos
+            with op_tab1:
+                st.subheader("Proyectos en Dolibarr")
+                
+                if st.button("Obtener Proyectos", key="get_projects_btn"):
+                    with st.spinner("Obteniendo proyectos desde Dolibarr..."):
+                        proyectos = dolibarr_client.get_projects()
+                        
+                        if proyectos:
+                            st.session_state.dolibarr_projects = proyectos
+                            st.success(f"Se encontraron {len(proyectos)} proyectos")
+                        else:
+                            st.warning("No se encontraron proyectos o hubo un error de comunicación")
+                
+                # Mostrar proyectos si están disponibles
+                if 'dolibarr_projects' in st.session_state and st.session_state.dolibarr_projects:
+                    for proyecto in st.session_state.dolibarr_projects:
+                        with st.expander(f"{proyecto['ref']} - {proyecto['title']}"):
+                            st.write(f"ID: {proyecto['id']}")
+                            st.write(f"Etiquetas: {', '.join(proyecto.get('tags', []))}")
+                            st.write(f"Estado: {proyecto.get('status', 'Desconocido')}")
+                            
+                            if 'description' in proyecto and proyecto['description']:
+                                st.write(f"Descripción: {proyecto['description']}")
+            
+            # Pestaña de Tableros Vinculados
+            with op_tab2:
+                st.subheader("Tableros vinculados con Proyectos")
+                
+                if st.button("Obtener Vinculaciones", key="get_links_btn"):
+                    with st.spinner("Obteniendo vinculaciones desde Dolibarr..."):
+                        vinculaciones = dolibarr_client.get_linked_boards()
+                        
+                        if vinculaciones:
+                            st.session_state.dolibarr_links = vinculaciones
+                            st.success(f"Se encontraron {len(vinculaciones)} vinculaciones")
+                        else:
+                            st.warning("No se encontraron vinculaciones o hubo un error de comunicación")
+                
+                # Mostrar vinculaciones si están disponibles
+                if 'dolibarr_links' in st.session_state and st.session_state.dolibarr_links:
+                    for vinculacion in st.session_state.dolibarr_links:
+                        with st.container():
+                            st.markdown(f"**Proyecto:** {vinculacion['project_ref']} - {vinculacion['project_title']}")
+                            st.markdown(f"**Tablero:** {vinculacion['board_name']} (ID: {vinculacion['board_id']})")
+                            
+                            # Botón para desvincular
+                            if st.button("Desvincular", key=f"unlink_{vinculacion['project_id']}"):
+                                if dolibarr_client.unlink_project_board(vinculacion['project_id']):
+                                    st.success("Proyecto desvinculado correctamente")
+                                    # Actualizar lista de vinculaciones
+                                    if 'dolibarr_links' in st.session_state:
+                                        del st.session_state.dolibarr_links
+                                    st.rerun()
+                                else:
+                                    st.error("Error al desvincular el proyecto")
+                            
+                            st.divider()
+                
+                # Sección para crear nueva vinculación
+                st.subheader("Vincular proyecto con tablero")
+                
+                # Seleccionar proyecto
+                proyectos_opciones = []
+                if 'dolibarr_projects' in st.session_state and st.session_state.dolibarr_projects:
+                    proyectos_opciones = [(p['id'], f"{p['ref']} - {p['title']}") for p in st.session_state.dolibarr_projects]
+                
+                proyecto_seleccionado = None
+                if proyectos_opciones:
+                    proyecto_id, proyecto_nombre = st.selectbox(
+                        "Seleccionar proyecto",
+                        options=proyectos_opciones,
+                        format_func=lambda x: x[1]
+                    )
+                    proyecto_seleccionado = proyecto_id
+                else:
+                    st.info("No hay proyectos disponibles. Por favor, carga los proyectos primero.")
+                
+                # Seleccionar tablero
+                tableros_opciones = []
+                if 'trello_data' in st.session_state and st.session_state.trello_data is not None:
+                    # Obtener tableros únicos del DataFrame
+                    tableros = st.session_state.trello_data[['tablero_id', 'tablero']].drop_duplicates()
+                    tableros_opciones = [(row['tablero_id'], row['tablero']) for _, row in tableros.iterrows()]
+                
+                tablero_seleccionado = None
+                tablero_nombre = None
+                if tableros_opciones:
+                    tablero_id, tablero_nombre = st.selectbox(
+                        "Seleccionar tablero",
+                        options=tableros_opciones,
+                        format_func=lambda x: x[1]
+                    )
+                    tablero_seleccionado = tablero_id
+                else:
+                    st.info("No hay tableros disponibles.")
+                
+                # Botón para vincular
+                if proyecto_seleccionado and tablero_seleccionado:
+                    if st.button("Vincular Proyecto con Tablero"):
+                        if dolibarr_client.link_project_board(proyecto_seleccionado, tablero_seleccionado, tablero_nombre):
+                            st.success("Proyecto vinculado correctamente")
+                            # Actualizar lista de vinculaciones
+                            if 'dolibarr_links' in st.session_state:
+                                del st.session_state.dolibarr_links
+                            st.rerun()
+                        else:
+                            st.error("Error al vincular el proyecto con el tablero")
+            
+            # Pestaña de Sincronización
+            with op_tab3:
+                st.subheader("Sincronización de Tareas")
+                
+                # Seleccionar vinculación para sincronizar
+                vinculaciones_opciones = []
+                if 'dolibarr_links' in st.session_state and st.session_state.dolibarr_links:
+                    vinculaciones_opciones = [(
+                        {'project_id': v['project_id'], 'board_id': v['board_id']},
+                        f"{v['project_ref']} - {v['project_title']} | {v['board_name']}"
+                    ) for v in st.session_state.dolibarr_links]
+                
+                vinculacion_seleccionada = None
+                if vinculaciones_opciones:
+                    vinculacion, vinculacion_nombre = st.selectbox(
+                        "Seleccionar vinculación",
+                        options=vinculaciones_opciones,
+                        format_func=lambda x: x[1]
+                    )
+                    vinculacion_seleccionada = vinculacion
+                else:
+                    st.info("No hay vinculaciones disponibles. Por favor, vincula proyectos con tableros primero.")
+                
+                # Opciones de sincronización
+                if vinculacion_seleccionada:
+                    st.checkbox("Sincronizar tareas Trello → Dolibarr", value=True, key="sync_to_dolibarr")
+                    
+                    # Botón para sincronizar
+                    if st.button("Iniciar Sincronización"):
+                        if st.session_state.get('sync_to_dolibarr'):
+                            with st.spinner("Sincronizando tareas..."):
+                                # Filtrar tareas del tablero seleccionado
+                                if 'trello_data' in st.session_state and st.session_state.trello_data is not None:
+                                    tareas_a_sincronizar = st.session_state.trello_data[
+                                        st.session_state.trello_data['tablero_id'] == vinculacion_seleccionada['board_id']
+                                    ]
+                                    
+                                    if not tareas_a_sincronizar.empty:
+                                        # Convertir a formato para la API
+                                        tareas_lista = []
+                                        for _, tarea in tareas_a_sincronizar.iterrows():
+                                            tarea_dict = {
+                                                'id': tarea['id'],
+                                                'nombre': tarea['nombre'],
+                                                'descripcion': tarea.get('descripcion', ''),
+                                                'lista': tarea['nombre_lista'],
+                                                'prioridad': tarea['prioridad'],
+                                                'etiquetas': tarea.get('etiquetas', []),
+                                                'fecha_creacion': tarea.get('fecha_creacion', ''),
+                                                'fecha_vencimiento': tarea.get('fecha_vencimiento', ''),
+                                                'url': tarea.get('url', '')
+                                            }
+                                            tareas_lista.append(tarea_dict)
+                                        
+                                        # Enviar a Dolibarr
+                                        if dolibarr_client.sync_tasks(
+                                            vinculacion_seleccionada['project_id'],
+                                            vinculacion_seleccionada['board_id'],
+                                            tareas_lista
+                                        ):
+                                            st.success(f"Se sincronizaron {len(tareas_lista)} tareas correctamente")
+                                        else:
+                                            st.error("Error al sincronizar las tareas")
+                                    else:
+                                        st.warning("No hay tareas para sincronizar en el tablero seleccionado")
+                                else:
+                                    st.warning("No hay datos de tareas disponibles")
+                        else:
+                            st.warning("No hay opciones de sincronización seleccionadas")
     
     # Pestaña Panel de Tareas
     with tab1:
