@@ -51,9 +51,33 @@ with st.sidebar:
         os.makedirs('datos')
     
     # Sección para cargar archivos JSON
-    st.subheader("Cargar archivos JSON de Trello")
+    st.subheader("Archivos JSON de Trello")
     
-    uploaded_files = st.file_uploader("Subí los archivos JSON exportados de Trello", 
+    # Verificar archivos en la carpeta attached_assets
+    archivos_json_adjuntos = []
+    if os.path.exists('attached_assets'):
+        for archivo in os.listdir('attached_assets'):
+            if archivo.endswith('.json'):
+                archivos_json_adjuntos.append(archivo)
+    
+    if archivos_json_adjuntos:
+        st.info(f"Se encontraron {len(archivos_json_adjuntos)} archivos JSON en 'attached_assets':")
+        for archivo in archivos_json_adjuntos:
+            st.write(f"- {archivo}")
+        
+        if st.button("Copiar archivos a carpeta 'datos'"):
+            # Copiar los archivos JSON de attached_assets a datos
+            for archivo in archivos_json_adjuntos:
+                origen = os.path.join('attached_assets', archivo)
+                destino = os.path.join('datos', archivo)
+                shutil.copy2(origen, destino)
+            
+            st.success(f"Se copiaron {len(archivos_json_adjuntos)} archivos a la carpeta 'datos'.")
+            st.session_state.files_processed = False
+    
+    # Opción para cargar archivos manualmente
+    st.subheader("Cargar archivos adicionales")
+    uploaded_files = st.file_uploader("Subí archivos JSON adicionales de Trello", 
                                      type=['json'], 
                                      accept_multiple_files=True)
     
@@ -64,7 +88,7 @@ with st.sidebar:
             with open(file_path, 'wb') as f:
                 f.write(uploaded_file.getbuffer())
         
-        st.success(f"Se subieron {len(uploaded_files)} archivos correctamente.")
+        st.success(f"Se subieron {len(uploaded_files)} archivos adicionales correctamente.")
         st.session_state.files_processed = False
     
     # Botón para procesar los archivos
