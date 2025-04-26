@@ -32,3 +32,44 @@ ModuleHelpConfig = Configure la URL de la aplicación Streamlit y sus credencial
 
 # Páginas específicas
 AutomationInfo = Esta sección permite automatizar tareas repetitivas identificadas en los tableros de Trello
+
+# Página principal (index.php)
+ConfigurationStatus = Estado de la configuración
+ConfiguredValue = Configurado
+NotConfigured = No configurado
+TrelloCredentials = Credenciales de Trello
+ModuleDescription = Descripción del módulo
+ModuleDescriptionLong = TrelloGestiona es un módulo que integra la gestión de tareas de Trello con Dolibarr, permitiendo visualizar tableros, automatizar tareas repetitivas y generar informes.
+AvailableActions = Acciones disponibles
+AccessDashboard = Acceder al tablero
+DashboardDescription = Visualiza tus tareas y tableros de Trello
+AccessAutomatizacion = Acceder a la automatización
+AutomatizacionDescription = Identifica y automatiza tareas repetitivas
+AccessSetup = Acceder a la configuración
+SetupDescription = Configura la integración con Trello y otras opciones del módulo
+
+# Integración con proyectos
+SyncWithTrello = Sincronizar con Trello
+TrelloTasks = Tareas de Trello
+ViewTrelloTasks = Ver tareas de Trello
+TrelloSummary = Resumen de Trello
+TasksFromTrello = Tareas importadas de Trello
+ProjectLinked = Proyecto vinculado con tablero de Trello
+
+# Proyectos y Trello
+ProyectosTrello = Proyectos y Trello
+LinkProjectWithTrello = Vincular proyecto con tablero de Trello
+LinkedTrelloBoard = Tablero de Trello vinculado
+LinkWithTrelloBoard = Vincular con tablero de Trello
+TrelloBoardID = ID del tablero de Trello
+LinkWithTrello = Vincular con Trello
+UnlinkFromTrello = Desvincular de Trello
+TrelloStatus = Estado en Trello
+Linked = Vinculado
+NotLinked = No vinculado
+Link = Vincular
+Unlink = Desvincular
+NoProjects = No hay proyectos disponibles
+ProjectLinkedWithBoard = Proyecto vinculado correctamente con el tablero
+ProjectUnlinkedFromBoard = Proyecto desvinculado del tablero
+NoTrelloCredentialsConfigured = No se han configurado las credenciales de Trello

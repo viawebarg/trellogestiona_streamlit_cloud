@@ -4,14 +4,12 @@
 -- la Free Software Foundation, ya sea la versión 3 de la Licencia, o
 -- (a su elección) cualquier versión posterior.
 
--- Script de creación de la tabla de configuración del módulo TrelloGestiona
+-- Script de creación de la tabla de relación entre proyectos de Dolibarr y tableros de Trello
 
-CREATE TABLE llx_trellogestiona_config(
+CREATE TABLE llx_trellogestiona_proyecto_tablero(
     rowid integer AUTO_INCREMENT PRIMARY KEY,
-    entity integer DEFAULT 1 NOT NULL,
-    streamlit_url varchar(255),
-    trello_api_key varchar(255),
-    trello_token varchar(255),
+    fk_project integer NOT NULL,
+    tablero_id varchar(255) NOT NULL,
     date_creation datetime NOT NULL,
     tms timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     fk_user_creat integer NOT NULL,

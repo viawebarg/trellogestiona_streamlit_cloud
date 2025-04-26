@@ -70,11 +70,37 @@ class modTrelloGestiona extends DolibarrModules
                 0,
                 'current',
                 1
+            ),
+            1 => array(
+                'TRELLOGESTIONA_API_KEY',
+                'chaine',
+                '',
+                'Clave API de Trello',
+                0,
+                'current',
+                1
+            ),
+            2 => array(
+                'TRELLOGESTIONA_TOKEN',
+                'chaine',
+                '',
+                'Token de Trello',
+                0,
+                'current',
+                1
             )
         );
 
         // Array para agregar tabs
         $this->tabs = array();
+        
+        // Hooks
+        $this->module_parts = array(
+            'hooks' => array(
+                'projectcard',         // Ficha de proyecto
+                'projecttab'           // Pestaña de proyecto
+            )
+        );
 
         // Diccionarios
         $this->dictionaries = array();
@@ -92,6 +118,20 @@ class modTrelloGestiona extends DolibarrModules
         $this->rights[$r][1] = 'Leer datos de Trello';
         $this->rights[$r][3] = 0;
         $this->rights[$r][4] = 'read';
+        $r++;
+        
+        // Permiso para automatizar
+        $this->rights[$r][0] = $this->numero + $r;
+        $this->rights[$r][1] = 'Administrar automatizaciones';
+        $this->rights[$r][3] = 0;
+        $this->rights[$r][4] = 'automatizacion';
+        $r++;
+        
+        // Permiso para configurar
+        $this->rights[$r][0] = $this->numero + $r;
+        $this->rights[$r][1] = 'Configurar módulo';
+        $this->rights[$r][3] = 1; // Solo administradores
+        $this->rights[$r][4] = 'config';
         $r++;
 
         // Menu entries
@@ -143,6 +183,23 @@ class modTrelloGestiona extends DolibarrModules
             'langs' => 'trellogestiona@trellogestiona',
             'position' => 100 + $r,
             'enabled' => '1',
+            'perms' => '$user->rights->trellogestiona->automatizacion',
+            'target' => '',
+            'user' => 0
+        );
+        $r++;
+
+        // Submenú - Proyectos Trello
+        $this->menu[$r] = array(
+            'fk_menu' => 'fk_mainmenu=trellogestiona',
+            'type' => 'left',
+            'titre' => 'ProyectosTrello',
+            'mainmenu' => 'trellogestiona',
+            'leftmenu' => 'proyectos',
+            'url' => '/trellogestiona/proyecto_trello.php',
+            'langs' => 'trellogestiona@trellogestiona',
+            'position' => 100 + $r,
+            'enabled' => '1',
             'perms' => '$user->rights->trellogestiona->read',
             'target' => '',
             'user' => 0
@@ -160,7 +217,7 @@ class modTrelloGestiona extends DolibarrModules
             'langs' => 'trellogestiona@trellogestiona',
             'position' => 100 + $r,
             'enabled' => '1',
-            'perms' => '$user->rights->trellogestiona->read',
+            'perms' => '$user->rights->trellogestiona->config',
             'target' => '',
             'user' => 0
         );
