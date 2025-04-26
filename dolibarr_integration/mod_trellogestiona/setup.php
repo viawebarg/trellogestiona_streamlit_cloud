@@ -1,175 +1,132 @@
 <?php
-/* Copyright (C) 2023-2025 TrelloGestiona
- * Este programa es software libre: puede redistribuirlo y/o modificarlo
- * bajo los términos de la Licencia Pública General GNU publicada por
- * la Free Software Foundation, ya sea la versión 3 de la Licencia, o
- * (a su elección) cualquier versión posterior.
- */
-
 /**
- * Página de configuración del módulo TrelloGestiona
+ * Configuración del módulo TrelloGestiona
  */
 
-// Cargar Dolibarr
-$res = 0;
-if (!$res && file_exists("../main.inc.php")) $res = @include "../main.inc.php";
-if (!$res && file_exists("../../main.inc.php")) $res = @include "../../main.inc.php";
-if (!$res && file_exists("../../../main.inc.php")) $res = @include "../../../main.inc.php";
-if (!$res) die("Archivo de inclusión principal no encontrado");
-
+// Carga del entorno Dolibarr
+require '../main.inc.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/admin.lib.php';
+require_once './lib/trellogestiona.lib.php';
 
 // Control de acceso
-if (!$user->admin) accessforbidden();
-
-// Cargar traducciones
-$langs->loadLangs(array('admin', 'trellogestiona@trellogestiona'));
-
-// Parámetros
-$action = GETPOST('action', 'aZ09');
-
-// Inicializar variables
-$error = 0;
-$setupnotice = '';
-
-/*
- * Acciones
- */
-
-if ($action == 'update') {
-    // Actualizar configuración
-    $streamlit_url = GETPOST('streamlit_url', 'alpha');
-    $trello_api_key = GETPOST('trello_api_key', 'alpha');
-    $trello_token = GETPOST('trello_token', 'alpha');
-    
-    if (!empty($streamlit_url)) {
-        dolibarr_set_const($db, 'TRELLOGESTIONA_STREAMLIT_URL', $streamlit_url, 'chaine', 0, '', $conf->entity);
-    }
-    
-    if (!empty($trello_api_key)) {
-        dolibarr_set_const($db, 'TRELLOGESTIONA_API_KEY', $trello_api_key, 'chaine', 0, '', $conf->entity);
-    }
-    
-    if (!empty($trello_token)) {
-        dolibarr_set_const($db, 'TRELLOGESTIONA_TOKEN', $trello_token, 'chaine', 0, '', $conf->entity);
-    }
-    
-    // Guardar en la base de datos
-    $sql = "SELECT rowid FROM ".MAIN_DB_PREFIX."trellogestiona_config WHERE entity = ".$conf->entity;
-    $result = $db->query($sql);
-    if ($result && $db->num_rows($result) > 0) {
-        // Actualizar configuración existente
-        $obj = $db->fetch_object($result);
-        $sql = "UPDATE ".MAIN_DB_PREFIX."trellogestiona_config SET";
-        $sql .= " streamlit_url = '".$db->escape($streamlit_url)."',";
-        $sql .= " trello_api_key = '".$db->escape($trello_api_key)."',";
-        $sql .= " trello_token = '".$db->escape($trello_token)."',";
-        $sql .= " tms = '".$db->idate(dol_now())."',";
-        $sql .= " fk_user_modif = ".$user->id;
-        $sql .= " WHERE rowid = ".$obj->rowid;
-        
-        $resql = $db->query($sql);
-        if (!$resql) {
-            $error++;
-            $setupnotice .= $db->lasterror();
-        }
-    } else {
-        // Insertar nueva configuración
-        $sql = "INSERT INTO ".MAIN_DB_PREFIX."trellogestiona_config";
-        $sql .= " (entity, streamlit_url, trello_api_key, trello_token, date_creation, fk_user_creat)";
-        $sql .= " VALUES (".$conf->entity.", ";
-        $sql .= "'".$db->escape($streamlit_url)."', ";
-        $sql .= "'".$db->escape($trello_api_key)."', ";
-        $sql .= "'".$db->escape($trello_token)."', ";
-        $sql .= "'".$db->idate(dol_now())."', ";
-        $sql .= $user->id;
-        $sql .= ")";
-        
-        $resql = $db->query($sql);
-        if (!$resql) {
-            $error++;
-            $setupnotice .= $db->lasterror();
-        }
-    }
-    
-    if (!$error) {
-        setEventMessages($langs->trans("SetupSaved"), null, 'mesgs');
-    } else {
-        setEventMessages($langs->trans("SetupError"), null, 'errors');
-    }
+if (!$user->rights->trellogestiona->config) {
+    accessforbidden();
 }
 
-/*
- * Vista
- */
+// Parámetros de configuración
+$streamlit_url = GETPOST('streamlit_url', 'alpha');
+$trello_api_key = GETPOST('trello_api_key', 'alpha');
+$trello_token = GETPOST('trello_token', 'alpha');
 
-$title = $langs->trans("TrelloGestiona") . ' - ' . $langs->trans("Setup");
+// Guardar configuración
+$action = GETPOST('action', 'alpha');
+if ($action == 'update') {
+    // Actualizar URL de Streamlit
+    dolibarr_set_const($db, 'TRELLOGESTIONA_STREAMLIT_URL', $streamlit_url, 'chaine', 0, '', $conf->entity);
+    // Actualizar credenciales de Trello
+    dolibarr_set_const($db, 'TRELLOGESTIONA_API_KEY', $trello_api_key, 'chaine', 0, '', $conf->entity);
+    dolibarr_set_const($db, 'TRELLOGESTIONA_TOKEN', $trello_token, 'chaine', 0, '', $conf->entity);
+    
+    setEventMessage($langs->trans('SetupSaved'));
+    header('Location: '.$_SERVER['PHP_SELF']);
+    exit;
+}
 
+// Título de la página
+$title = "Configuración TrelloGestiona";
 llxHeader('', $title);
 
-$linkback = '<a href="'.DOL_URL_ROOT.'/admin/modules.php?restore_lastsearch_values=1">'.$langs->trans("BackToModuleList").'</a>';
-print load_fiche_titre($title, $linkback, 'trellogestiona.png@trellogestiona');
+// Mostrar pestañas
+print_trellogestiona_tabs('config');
 
-// Configuración principal
-print '<form method="post" action="'.$_SERVER["PHP_SELF"].'">';
-print '<input type="hidden" name="token" value="'.newToken().'">';
+// Mostrar formulario de configuración
+print '<div class="config-container">';
+print '<h1>Configuración del módulo TrelloGestiona</h1>';
+
+// Iniciar formulario
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
 print '<input type="hidden" name="action" value="update">';
+print '<input type="hidden" name="token" value="'.newToken().'">';
 
-print '<table class="noborder centpercent">';
-print '<tr class="liste_titre">';
-print '<td>'.$langs->trans("Parameter").'</td>';
-print '<td>'.$langs->trans("Value").'</td>';
-print '</tr>';
+// Sección Configuración de Streamlit
+print '<div class="config-section">';
+print '<h2>Configuración de la aplicación Streamlit</h2>';
+print '<div class="config-item">';
+print '<label for="streamlit_url">URL de la aplicación Streamlit:</label>';
+print '<input type="text" id="streamlit_url" name="streamlit_url" value="'.$conf->global->TRELLOGESTIONA_STREAMLIT_URL.'" size="50">';
+print '<div class="help-text">URL completa donde se aloja la aplicación Streamlit (ej: http://localhost:5000)</div>';
+print '</div>';
+print '</div>';
 
-// Streamlit URL
-print '<tr class="oddeven">';
-print '<td>'.$langs->trans("StreamlitURL").'</td>';
-print '<td><input type="text" name="streamlit_url" size="60" value="'.$conf->global->TRELLOGESTIONA_STREAMLIT_URL.'"></td>';
-print '</tr>';
+// Sección Credenciales de Trello (opcional)
+print '<div class="config-section">';
+print '<h2>Credenciales de Trello (opcional)</h2>';
+print '<div class="info-box" style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">';
+print '<p>Estas credenciales son opcionales y solo se utilizan si deseas que la aplicación Streamlit se conecte automáticamente a Trello.</p>';
+print '</div>';
+print '<div class="config-item">';
+print '<label for="trello_api_key">Clave API de Trello:</label>';
+print '<input type="text" id="trello_api_key" name="trello_api_key" value="'.$conf->global->TRELLOGESTIONA_API_KEY.'" size="50">';
+print '</div>';
+print '<div class="config-item">';
+print '<label for="trello_token">Token de Trello:</label>';
+print '<input type="password" id="trello_token" name="trello_token" value="'.$conf->global->TRELLOGESTIONA_TOKEN.'" size="50">';
+print '</div>';
+print '</div>';
 
-// Trello API Key
-print '<tr class="oddeven">';
-print '<td>'.$langs->trans("TrelloAPIKey").'</td>';
-print '<td><input type="text" name="trello_api_key" size="60" value="'.$conf->global->TRELLOGESTIONA_API_KEY.'"></td>';
-print '</tr>';
-
-// Trello Token
-print '<tr class="oddeven">';
-print '<td>'.$langs->trans("TrelloToken").'</td>';
-print '<td><input type="text" name="trello_token" size="60" value="'.$conf->global->TRELLOGESTIONA_TOKEN.'"></td>';
-print '</tr>';
-
-// API Token (solo lectura, se genera automáticamente)
-print '<tr class="oddeven">';
-print '<td>'.$langs->trans("APIToken").'</td>';
-print '<td>';
-print '<input type="text" readonly="readonly" size="60" value="'.$conf->global->TRELLOGESTIONA_API_TOKEN.'">';
-print ' <span class="opacitymedium">'.$langs->trans("APITokenHelp").'</span>';
-print '</td>';
-print '</tr>';
-
-print '</table>';
-
-print '<div class="center">';
-print '<input type="submit" class="button" value="'.$langs->trans("SaveSettings").'">';
+// Botón de envío
+print '<div class="config-submit">';
+print '<input type="submit" class="button buttonaction" value="Guardar configuración">';
 print '</div>';
 
 print '</form>';
 
-// Información sobre uso
-print '<br>';
-print '<div class="info">';
-print $langs->trans("ModuleHelp");
-print '<br>';
-print $langs->trans("ModuleHelpConfig");
+// Instrucciones de uso
+print '<div class="info-section" style="margin-top: 30px; background-color: #f8f9fa; padding: 15px; border-radius: 5px;">';
+print '<h2>Instrucciones para la integración simplificada</h2>';
+print '<p>Esta versión del módulo utiliza una integración simple mediante iframe, sin necesidad de configurar API:</p>';
+print '<ol>';
+print '<li><strong>URL de la aplicación Streamlit:</strong> Es la única configuración obligatoria. Indica dónde está alojada la aplicación Streamlit.</li>';
+print '<li><strong>Visualización:</strong> La aplicación se mostrará directamente dentro de Dolibarr en la sección Dashboard.</li>';
+print '<li><strong>Credenciales de Trello:</strong> Son opcionales y solo se utilizan si deseas que la aplicación Streamlit se conecte automáticamente a Trello.</li>';
+print '</ol>';
 print '</div>';
 
-// Enlace a la documentación de la API
-print '<br>';
-print '<div class="tabsAction">';
-print '<a class="butAction" href="'.DOL_URL_ROOT.'/custom/trellogestiona/api/doc.php">'.$langs->trans("ViewAPIDocumentation").'</a>';
+// Test de conexión
+print '<div class="test-section" style="margin-top: 30px;">';
+print '<h2>Prueba de conexión</h2>';
+
+if (!empty($conf->global->TRELLOGESTIONA_STREAMLIT_URL)) {
+    // Comprobar si la URL es accesible
+    $ch = curl_init($conf->global->TRELLOGESTIONA_STREAMLIT_URL);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_exec($ch);
+    $status_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($status_code >= 200 && $status_code < 300) {
+        print '<div class="success-message" style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px;">';
+        print '<p>✅ La aplicación Streamlit está accesible en la URL configurada.</p>';
+        print '<p><a href="dashboard.php" class="button buttonaction">Ver en el Dashboard</a></p>';
+        print '</div>';
+    } else {
+        print '<div class="error-message" style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px;">';
+        print '<p>❌ No se puede acceder a la aplicación Streamlit en la URL configurada.</p>';
+        print '<p>Por favor, verifica que la aplicación esté en ejecución y que la URL sea correcta.</p>';
+        print '</div>';
+    }
+} else {
+    print '<div class="warning-message" style="background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 5px;">';
+    print '<p>⚠️ No se ha configurado la URL de la aplicación Streamlit.</p>';
+    print '</div>';
+}
+
 print '</div>';
 
-// Cerrar página
+print '</div>';
+
+// Pie de página
 llxFooter();
 $db->close();
