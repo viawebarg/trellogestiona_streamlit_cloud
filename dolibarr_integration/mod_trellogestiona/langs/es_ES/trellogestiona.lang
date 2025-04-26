@@ -73,3 +73,15 @@ NoProjects = No hay proyectos disponibles
 ProjectLinkedWithBoard = Proyecto vinculado correctamente con el tablero
 ProjectUnlinkedFromBoard = Proyecto desvinculado del tablero
 NoTrelloCredentialsConfigured = No se han configurado las credenciales de Trello
+
+# Caja/Widget
+BoxTrelloTasks = Tareas de Trello próximas
+BoxTrelloTasksDescription = Lista de tareas próximas en Trello
+NoTasksFound = No se encontraron tareas
+ModuleNotConfigured = Módulo no configurado
+Task = Tarea
+DueDate = Fecha de vencimiento
+Priority = Prioridad
+Alta = Alta
+Media = Media
+Baja = Baja

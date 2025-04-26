@@ -88,6 +88,15 @@ class modTrelloGestiona extends DolibarrModules
                 0,
                 'current',
                 1
+            ),
+            3 => array(
+                'TRELLOGESTIONA_API_TOKEN',
+                'chaine',
+                md5(uniqid(mt_rand(), true)),
+                'Token para la API de TrelloGestiona',
+                0,
+                'current',
+                1
             )
         );
 
@@ -106,7 +115,13 @@ class modTrelloGestiona extends DolibarrModules
         $this->dictionaries = array();
 
         // Cajas/Widgets
-        $this->boxes = array();
+        $this->boxes = array(
+            array(
+                'file' => 'trellogestiona_box.php@trellogestiona',
+                'note' => '',
+                'enabledbydefaulton' => 'Home'
+            )
+        );
 
         // Permisos
         $this->rights = array();

@@ -139,6 +139,15 @@ print '<td>'.$langs->trans("TrelloToken").'</td>';
 print '<td><input type="text" name="trello_token" size="60" value="'.$conf->global->TRELLOGESTIONA_TOKEN.'"></td>';
 print '</tr>';
 
+// API Token (solo lectura, se genera automáticamente)
+print '<tr class="oddeven">';
+print '<td>'.$langs->trans("APIToken").'</td>';
+print '<td>';
+print '<input type="text" readonly="readonly" size="60" value="'.$conf->global->TRELLOGESTIONA_API_TOKEN.'">';
+print ' <span class="opacitymedium">'.$langs->trans("APITokenHelp").'</span>';
+print '</td>';
+print '</tr>';
+
 print '</table>';
 
 print '<div class="center">';
