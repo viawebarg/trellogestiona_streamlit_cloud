@@ -5,10 +5,13 @@ import plotly.express as px
 import json
 import shutil
 import numpy as np
+import subprocess
+from datetime import datetime, timedelta
 from cargar_datos import procesar_todos_los_json, convertir_a_dataframe, priorizar_tareas, categorizar_tareas
 from gestor_flujo_trabajo import crear_flujo_trabajo, mapear_listas_trello_a_flujo_trabajo
 import db_manager
 import automatizacion_tareas
+import generador_scripts
 
 # Configuración de la página
 st.set_page_config(
@@ -692,17 +695,88 @@ if st.session_state.trello_data is not None:
                             
                             st.markdown(f"**Tiempo estimado**: {plan['tiempo_estimado']}")
                             
+                            # Opciones de automatización
+                            col1, col2 = st.columns(2)
+                            
                             # Botón para simular la automatización
-                            if st.button("Simular Automatización", key=f"simular_{tarea_id}"):
-                                with st.spinner("Realizando automatización simulada..."):
-                                    # Simulación
-                                    resultado = automatizacion_tareas.ejecutar_automatizacion_simulada(tarea_id)
-                                    
-                                    if resultado.get("error"):
-                                        st.error(resultado["error"])
-                                    else:
-                                        st.success(f"Automatización simulada exitosamente en {resultado['tiempo_ejecucion']}")
-                                        st.json(resultado)
+                            with col1:
+                                if st.button("Simular Automatización", key=f"simular_{tarea_id}"):
+                                    with st.spinner("Realizando automatización simulada..."):
+                                        # Simulación
+                                        resultado = automatizacion_tareas.ejecutar_automatizacion_simulada(tarea_id)
+                                        
+                                        if resultado.get("error"):
+                                            st.error(resultado["error"])
+                                        else:
+                                            st.success(f"Automatización simulada exitosamente en {resultado['tiempo_ejecucion']}")
+                                            st.json(resultado)
+                            
+                            # Botón para generar script de automatización
+                            with col2:
+                                if st.button("Generar Script", key=f"generar_script_{tarea_id}"):
+                                    with st.spinner("Generando script de automatización..."):
+                                        # Obtener el tipo de automatización
+                                        tipo_auto = plan.get('tipo', 'General')
+                                        
+                                        # Configuración básica para el script
+                                        configuracion = {
+                                            "descripcion": tarea_seleccionada
+                                        }
+                                        
+                                        # Generar script
+                                        try:
+                                            ruta_script = generador_scripts.obtener_script_para_tarea(
+                                                tarea_id=tarea_id,
+                                                df_tareas=tareas_automatizables,
+                                                tipo=tipo_auto,
+                                                configuracion=configuracion
+                                            )
+                                            
+                                            if ruta_script and os.path.exists(ruta_script):
+                                                st.success(f"Script generado exitosamente: {os.path.basename(ruta_script)}")
+                                                
+                                                # Mostrar opciones para el script
+                                                st.markdown("#### Opciones para el script generado:")
+                                                
+                                                # Verificar el contenido del script
+                                                with open(ruta_script, 'r') as f:
+                                                    contenido_script = f.read()
+                                                
+                                                # Mostrar el código en un expander
+                                                with st.expander("Ver código del script"):
+                                                    st.code(contenido_script, language="python")
+                                                
+                                                # Opciones adicionales
+                                                col_a, col_b = st.columns(2)
+                                                
+                                                with col_a:
+                                                    # Opción para ejecutar el script
+                                                    if st.button("Ejecutar Script", key=f"ejecutar_{tarea_id}"):
+                                                        with st.spinner("Ejecutando script..."):
+                                                            resultado_ejecucion = generador_scripts.ejecutar_script(ruta_script)
+                                                            
+                                                            if resultado_ejecucion.get("exito", False):
+                                                                st.success("Script ejecutado correctamente")
+                                                                st.write("Resultado:")
+                                                                st.code(resultado_ejecucion.get("salida", "No hay salida disponible"))
+                                                            else:
+                                                                st.error(f"Error al ejecutar el script: {resultado_ejecucion.get('mensaje', 'Error desconocido')}")
+                                                
+                                                with col_b:
+                                                    # Opción para descargar el script
+                                                    with open(ruta_script, "rb") as f:
+                                                        script_bytes = f.read()
+                                                        
+                                                    st.download_button(
+                                                        label="Descargar Script", 
+                                                        data=script_bytes,
+                                                        file_name=os.path.basename(ruta_script),
+                                                        mime="text/plain"
+                                                    )
+                                            else:
+                                                st.error("No se pudo generar el script para esta tarea")
+                                        except Exception as e:
+                                            st.error(f"Error al generar script: {str(e)}")
             else:
                 st.info("No se encontraron tareas automatizables según los criterios de análisis.")
                 
@@ -719,6 +793,133 @@ if st.session_state.trello_data is not None:
                     """)
         else:
             st.warning("No hay datos disponibles para análisis de automatización.")
+        
+        # Añadir sección para gestión de scripts generados
+        st.markdown("---")
+        st.subheader("Gestión de Scripts de Automatización")
+        
+        # Verificar si existe el directorio de scripts
+        directorio_scripts = os.path.join(os.getcwd(), "scripts_automatizacion")
+        if not os.path.exists(directorio_scripts):
+            os.makedirs(directorio_scripts)
+        
+        # Verificar si hay scripts generados
+        scripts = [f for f in os.listdir(directorio_scripts) if f.endswith('.py')]
+        
+        if scripts:
+            st.success(f"Scripts de automatización disponibles: {len(scripts)}")
+            
+            # Crear tabla con los scripts
+            df_scripts = pd.DataFrame({
+                "Nombre": scripts,
+                "Tipo": [s.split('_')[0].capitalize() for s in scripts],
+                "Fecha de Creación": [datetime.fromtimestamp(os.path.getctime(os.path.join(directorio_scripts, s))).strftime("%d/%m/%Y %H:%M") for s in scripts],
+                "Tamaño": [f"{os.path.getsize(os.path.join(directorio_scripts, s)) / 1024:.1f} KB" for s in scripts]
+            })
+            
+            st.dataframe(df_scripts)
+            
+            # Seleccionar un script para acciones adicionales
+            script_seleccionado = st.selectbox(
+                "Seleccionar script para acciones adicionales:",
+                options=scripts
+            )
+            
+            if script_seleccionado:
+                st.markdown(f"#### Script seleccionado: {script_seleccionado}")
+                ruta_script = os.path.join(directorio_scripts, script_seleccionado)
+                
+                # Mostrar contenido del script
+                with st.expander("Ver contenido del script"):
+                    with open(ruta_script, 'r') as f:
+                        contenido = f.read()
+                    st.code(contenido, language="python")
+                
+                # Opciones para el script
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    # Ejecutar script
+                    if st.button("Ejecutar Script", key="ejecutar_script_seleccionado"):
+                        with st.spinner(f"Ejecutando {script_seleccionado}..."):
+                            try:
+                                resultado = generador_scripts.ejecutar_script(ruta_script)
+                                if resultado.get("exito", False):
+                                    st.success("Script ejecutado correctamente")
+                                    st.write("Resultado:")
+                                    st.code(resultado.get("salida", "No hay salida disponible"))
+                                else:
+                                    st.error(f"Error al ejecutar el script: {resultado.get('mensaje', 'Error desconocido')}")
+                            except Exception as e:
+                                st.error(f"Error: {str(e)}")
+                
+                with col2:
+                    # Programar script
+                    if st.button("Programar Ejecución", key="programar_script"):
+                        st.markdown("##### Programar ejecución automática")
+                        
+                        col_a, col_b = st.columns(2)
+                        
+                        with col_a:
+                            tipo_programacion = st.selectbox(
+                                "Frecuencia:",
+                                options=["diaria", "semanal", "mensual"]
+                            )
+                        
+                        with col_b:
+                            hora_programacion = st.text_input("Hora (HH:MM):", value="09:00")
+                        
+                        if st.button("Confirmar Programación", key="confirmar_programacion"):
+                            with st.spinner("Configurando programación..."):
+                                try:
+                                    resultado = generador_scripts.programar_script(
+                                        ruta_script, 
+                                        programacion=tipo_programacion,
+                                        hora=hora_programacion
+                                    )
+                                    
+                                    if resultado.get("exito", False):
+                                        st.success(resultado.get("mensaje", "Script programado correctamente"))
+                                    else:
+                                        st.error(f"Error al programar: {resultado.get('mensaje', 'Error desconocido')}")
+                                except Exception as e:
+                                    st.error(f"Error: {str(e)}")
+                
+                with col3:
+                    # Descargar script
+                    with open(ruta_script, "rb") as f:
+                        script_bytes = f.read()
+                    
+                    st.download_button(
+                        label="Descargar Script", 
+                        data=script_bytes,
+                        file_name=script_seleccionado,
+                        mime="text/plain",
+                        key="descargar_script_seleccionado"
+                    )
+        else:
+            st.info("""
+            Aún no hay scripts de automatización generados. Para crear scripts:
+            
+            1. Identifica una tarea automatizable en la sección superior
+            2. Selecciona la tarea y haz clic en "Generar Script"
+            3. El script se guardará en esta sección para su gestión
+            """)
+            
+            # Información sobre tipos de scripts
+            with st.expander("Tipos de scripts disponibles"):
+                st.markdown("""
+                ### Tipos de scripts de automatización
+                
+                El sistema puede generar diferentes tipos de scripts dependiendo de la tarea:
+                
+                1. **Scripts de correo**: Automatización de envío de correos y notificaciones.
+                2. **Scripts de reportes**: Generación automática de informes y estadísticas.
+                3. **Scripts de backup**: Copias de seguridad y sincronización de datos.
+                4. **Scripts de limpieza**: Depuración y organización de datos.
+                
+                Cada script incluye comentarios detallados y está listo para ser ejecutado o programado.
+                """)
 
 else:
     # Verificar si hay datos en la base de datos
