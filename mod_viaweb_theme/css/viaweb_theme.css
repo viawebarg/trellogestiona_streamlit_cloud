@@ -1,0 +1,268 @@
+/**
+ * Tema VIAWEB para Dolibarr
+ * Basado en Oblyon pero con la paleta de colores e identidad de VIAWEB
+ */
+
+/* Colores principales */
+:root {
+    --morado-principal: #543088;
+    --azul-oscuro: #0E4895;
+    --azul-medio: #536AAF;
+    --azul-claro: #B3BDD7;
+    --gris-claro: #f0f2f6;
+    --blanco: #ffffff;
+}
+
+/* Estilo para el menú de navegación */
+div.tmenu {
+    background: linear-gradient(to right, var(--azul-oscuro), var(--morado-principal));
+}
+
+/* Links en el menú principal */
+div.tmenu .tmenuimage {
+    color: var(--blanco) !important;
+}
+
+div.tmenu .tmenulabel a.tmenuimage {
+    color: var(--blanco) !important;
+}
+
+/* Logotipo */
+div.tmenu .tmenudiv .logo {
+    background-color: transparent !important;
+}
+
+/* Badges de conteo */
+.badge {
+    background-color: var(--morado-principal) !important;
+    color: var(--blanco) !important;
+}
+
+/* Títulos */
+.titlefield {
+    color: var(--azul-oscuro) !important;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--azul-oscuro) !important;
+}
+
+/* Botones principales */
+.button, .buttonDelete, input[type="submit"], input[type="button"] {
+    background: var(--azul-oscuro) !important;
+    color: var(--blanco) !important;
+    border: none !important;
+    border-radius: 4px !important;
+    padding: 8px 16px !important;
+    transition: all 0.2s;
+}
+
+.button:hover, .buttonDelete:hover, input[type="submit"]:hover, input[type="button"]:hover {
+    background: var(--morado-principal) !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+/* Inputs y selectores */
+input[type="text"], input[type="password"], input[type="email"], input[type="number"], textarea, select {
+    border: 1px solid var(--azul-claro) !important;
+    border-radius: 4px !important;
+    padding: 6px 10px !important;
+}
+
+input[type="text"]:focus, input[type="password"]:focus, input[type="email"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+    border-color: var(--morado-principal) !important;
+    box-shadow: 0 0 0 2px rgba(84, 48, 136, 0.2) !important;
+}
+
+/* Tabs */
+div.tabBar {
+    border-top: 3px solid var(--morado-principal) !important;
+    padding-top: 15px !important;
+}
+
+.tab {
+    background: var(--gris-claro) !important;
+    border: none !important;
+    border-radius: 4px 4px 0 0 !important;
+    margin-right: 4px !important;
+}
+
+.tab.tabactive {
+    background: var(--azul-claro) !important;
+    color: var(--azul-oscuro) !important;
+    font-weight: bold !important;
+}
+
+.tab:hover {
+    background: var(--azul-claro) !important;
+}
+
+/* Tablas */
+.liste_titre, .liste_titre_create, .liste_titre_add, .liste_titre_remove {
+    background: var(--azul-oscuro) !important;
+    color: var(--blanco) !important;
+}
+
+.oddeven:hover {
+    background-color: rgba(84, 48, 136, 0.1) !important;
+}
+
+/* Widget de kanban */
+.info-box {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+.info-box-icon {
+    background-color: var(--azul-oscuro) !important;
+    color: var(--blanco) !important;
+}
+
+/* Enlaces */
+a {
+    color: var(--azul-medio) !important;
+}
+
+a:hover {
+    color: var(--morado-principal) !important;
+}
+
+/* Iconos */
+.fa, .fas, .far, .fab {
+    color: var(--azul-oscuro);
+}
+
+/* Ficha proyectos */
+.fichehalfright, .fichehalfleft {
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Barras de progreso */
+.progress {
+    background-color: var(--gris-claro) !important;
+    border-radius: 20px !important;
+    height: 10px !important;
+}
+
+.progress-bar {
+    background: linear-gradient(to right, var(--azul-oscuro), var(--morado-principal)) !important;
+    border-radius: 20px !important;
+}
+
+/* Footer */
+div.login_block_other {
+    border-top: 1px solid var(--azul-claro);
+}
+
+/* Alertas */
+.info, .warning, .error {
+    border-radius: 4px !important;
+    padding: 10px 15px !important;
+}
+
+.info {
+    background-color: rgba(83, 106, 175, 0.1) !important;
+    border-left: 5px solid var(--azul-medio) !important;
+}
+
+.warning {
+    background-color: rgba(255, 187, 51, 0.1) !important;
+    border-left: 5px solid #ffbb33 !important;
+}
+
+.error {
+    background-color: rgba(237, 85, 101, 0.1) !important;
+    border-left: 5px solid #ed5565 !important;
+}
+
+/* Buscador */
+#top-menu-toogle-search-dropdown {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-radius: 0 0 8px 8px !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Página de inicio */
+.box-flex-item {
+    background: var(--blanco) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+    border-top: 3px solid var(--azul-medio) !important;
+    transition: all 0.3s;
+}
+
+.box-flex-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Modo oscuro */
+body.dark {
+    background-color: #101010 !important;
+}
+
+body.dark div.tmenu {
+    background: linear-gradient(to right, var(--azul-oscuro), var(--morado-principal)) !important;
+}
+
+body.dark .panel {
+    background-color: #202020 !important;
+}
+
+body.dark input[type="text"], 
+body.dark input[type="password"], 
+body.dark input[type="email"], 
+body.dark input[type="number"], 
+body.dark textarea, 
+body.dark select {
+    background-color: #303030 !important;
+    color: #e0e0e0 !important;
+}
+
+body.dark h1, 
+body.dark h2, 
+body.dark h3, 
+body.dark h4, 
+body.dark h5, 
+body.dark h6, 
+body.dark .titlefield {
+    color: var(--azul-claro) !important;
+}
+
+body.dark .box-flex-item {
+    background-color: #202020 !important;
+}
+
+body.dark td {
+    color: #e0e0e0 !important;
+}
+
+/* TrelloGestiona: integración específica */
+.trello-card {
+    background-color: var(--blanco);
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    padding: 15px;
+    border-left: 5px solid var(--azul-medio);
+}
+
+.trello-card.high-priority {
+    border-left-color: #ed5565;
+}
+
+.trello-card.medium-priority {
+    border-left-color: #ffbb33;
+}
+
+.trello-card.low-priority {
+    border-left-color: #11c1d3;
+}
+
+.trello-dashboard iframe {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
