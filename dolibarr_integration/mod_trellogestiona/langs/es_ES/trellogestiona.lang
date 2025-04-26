@@ -18,3 +18,17 @@ ConfigError = Error al guardar la configuración
 ConfigSuccess = Configuración guardada exitosamente
 RefreshData = Actualizar datos
 NoData = No hay datos disponibles
+
+# Avisos y mensajes
+NoStreamlitURLConfigured = No se ha configurado la URL de la aplicación Streamlit
+GoToSetup = Ir a configuración
+SetupSaved = Configuración guardada correctamente
+SetupError = Error al guardar la configuración
+Parameter = Parámetro
+Value = Valor
+BackToModuleList = Volver a la lista de módulos
+ModuleHelp = Este módulo permite integrar el gestor de tareas Trello con Dolibarr
+ModuleHelpConfig = Configure la URL de la aplicación Streamlit y sus credenciales de Trello para comenzar a trabajar
+
+# Páginas específicas
+AutomationInfo = Esta sección permite automatizar tareas repetitivas identificadas en los tableros de Trello
