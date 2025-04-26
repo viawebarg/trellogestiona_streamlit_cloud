@@ -5,12 +5,54 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import datetime
 import json
+import time
+import logging
+
+# Configurar logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Obtener la URL de la base de datos desde las variables de entorno
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
-# Crear el motor SQLAlchemy
-engine = create_engine(DATABASE_URL)
+# Número máximo de intentos de conexión
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # segundos
+
+# Crear el motor SQLAlchemy con manejo de errores
+def get_engine():
+    for attempt in range(MAX_RETRIES):
+        try:
+            logger.info(f"Intento {attempt+1} de conexión a la base de datos")
+            # Crear el motor con opciones de conexión más robustas
+            engine = create_engine(
+                DATABASE_URL, 
+                pool_pre_ping=True,  # Verifica que la conexión esté viva
+                pool_recycle=3600,   # Recicla conexiones después de una hora
+                connect_args={'connect_timeout': 10}  # Timeout de conexión
+            )
+            # Probar la conexión
+            with engine.connect() as conn:
+                conn.execute("SELECT 1")
+            logger.info("Conexión a la base de datos establecida correctamente")
+            return engine
+        except Exception as e:
+            logger.error(f"Error al conectar a la base de datos: {str(e)}")
+            if attempt < MAX_RETRIES - 1:
+                logger.info(f"Reintentando en {RETRY_DELAY} segundos...")
+                time.sleep(RETRY_DELAY)
+            else:
+                logger.error("Número máximo de intentos alcanzado. No se pudo conectar a la base de datos.")
+                raise
+
+# Inicializar el motor
+try:
+    engine = get_engine()
+except Exception as e:
+    logger.error(f"No se pudo establecer la conexión a la base de datos: {str(e)}")
+    # Crear un motor en memoria como fallback para que la aplicación no se caiga
+    logger.warning("Usando base de datos en memoria como fallback")
+    engine = create_engine('sqlite:///:memory:')
 
 # Crear la base declarativa
 Base = declarative_base()

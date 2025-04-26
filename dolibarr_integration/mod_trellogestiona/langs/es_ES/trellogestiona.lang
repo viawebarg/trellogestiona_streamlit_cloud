@@ -1,113 +1,38 @@
-# Archivo de traducción para el módulo TrelloGestiona
-ModuleName = TrelloGestiona
-ModuleDesc = Integración con el gestor de tareas Trello
+# Dolibarr language file - Source file is es_ES - trellogestiona
+Module500000Name = TrelloGestiona
+Module500000Desc = Integración con el gestor de tareas Trello
+TrelloGestiona = TrelloGestiona
 
-# Menús
-TrelloGestiona = Gestor Trello
-Dashboard = Tablero
-Automatizacion = Automatización
+# Admin page
 Setup = Configuración
-
-# Botones y etiquetas
-SaveSettings = Guardar configuración
+TrelloGestionaSetup = Configuración del módulo TrelloGestiona
 StreamlitURL = URL de la aplicación Streamlit
 TrelloAPIKey = Clave API de Trello
 TrelloToken = Token de Trello
-SettingsSaved = Configuración guardada correctamente
-ConfigError = Error al guardar la configuración
-ConfigSuccess = Configuración guardada exitosamente
-RefreshData = Actualizar datos
-NoData = No hay datos disponibles
+SetupSaved = Configuración guardada
 
-# Avisos y mensajes
-NoStreamlitURLConfigured = No se ha configurado la URL de la aplicación Streamlit
-GoToSetup = Ir a configuración
-SetupSaved = Configuración guardada correctamente
-SetupError = Error al guardar la configuración
-Parameter = Parámetro
-Value = Valor
-BackToModuleList = Volver a la lista de módulos
-ModuleHelp = Este módulo permite integrar el gestor de tareas Trello con Dolibarr
-ModuleHelpConfig = Configure la URL de la aplicación Streamlit y sus credenciales de Trello para comenzar a trabajar
+# Main menu
+Dashboard = Panel de control
+ProyectosTrello = Proyectos Trello
+Automatización = Automatización
+Configuración = Configuración
 
-# Páginas específicas
-AutomationInfo = Esta sección permite automatizar tareas repetitivas identificadas en los tableros de Trello
-
-# Página principal (index.php)
-ConfigurationStatus = Estado de la configuración
-ConfiguredValue = Configurado
-NotConfigured = No configurado
-TrelloCredentials = Credenciales de Trello
-ModuleDescription = Descripción del módulo
-ModuleDescriptionLong = TrelloGestiona es un módulo que integra la gestión de tareas de Trello con Dolibarr, permitiendo visualizar tableros, automatizar tareas repetitivas y generar informes.
-AvailableActions = Acciones disponibles
-AccessDashboard = Acceder al tablero
-DashboardDescription = Visualiza tus tareas y tableros de Trello
-AccessAutomatizacion = Acceder a la automatización
-AutomatizacionDescription = Identifica y automatiza tareas repetitivas
-AccessSetup = Acceder a la configuración
-SetupDescription = Configura la integración con Trello y otras opciones del módulo
-
-# Integración con proyectos
-SyncWithTrello = Sincronizar con Trello
-TrelloTasks = Tareas de Trello
-ViewTrelloTasks = Ver tareas de Trello
-TrelloSummary = Resumen de Trello
-TasksFromTrello = Tareas importadas de Trello
-ProjectLinked = Proyecto vinculado con tablero de Trello
-
-# Proyectos y Trello
-ProyectosTrello = Proyectos y Trello
-LinkProjectWithTrello = Vincular proyecto con tablero de Trello
-LinkedTrelloBoard = Tablero de Trello vinculado
-LinkWithTrelloBoard = Vincular con tablero de Trello
-TrelloBoardID = ID del tablero de Trello
-LinkWithTrello = Vincular con Trello
-UnlinkFromTrello = Desvincular de Trello
-TrelloStatus = Estado en Trello
-Linked = Vinculado
-NotLinked = No vinculado
-Link = Vincular
+# Project tab
+TrelloBoard = Tablero de Trello
+NoTrelloBoardLinked = No hay tablero de Trello vinculado
+LinkToTrello = Vincular con Trello
+ViewBoard = Ver tablero
 Unlink = Desvincular
-NoProjects = No hay proyectos disponibles
-ProjectLinkedWithBoard = Proyecto vinculado correctamente con el tablero
-ProjectUnlinkedFromBoard = Proyecto desvinculado del tablero
-NoTrelloCredentialsConfigured = No se han configurado las credenciales de Trello
+LinkDate = Fecha de vinculación
+TrelloBoardView = Vista del tablero de Trello
 
-# Caja/Widget
-BoxTrelloTasks = Tareas de Trello próximas
-BoxTrelloTasksDescription = Lista de tareas próximas en Trello
-NoTasksFound = No se encontraron tareas
-ModuleNotConfigured = Módulo no configurado
-Task = Tarea
-DueDate = Fecha de vencimiento
-Priority = Prioridad
-Alta = Alta
-Media = Media
-Baja = Baja
+# Project board page
+ConfirmUnlink = ¿Confirma que desea desvincular este proyecto del tablero de Trello?
+LinkSaved = Vinculación guardada correctamente
+LinkRemoved = Vinculación eliminada correctamente
+NoRecords = No hay registros
 
-# API
-APIToken = Token de API
-APITokenHelp = Este token es necesario para la comunicación entre Streamlit y Dolibarr
-APIEndpoint = Punto de acceso API
-APIUsage = Uso de la API
-APIInstructions = Instrucciones de API
-GetProjects = Obtener proyectos
-GetLinkedBoards = Obtener tableros vinculados
-LinkProjectBoard = Vincular proyecto con tablero
-UnlinkProjectBoard = Desvincular proyecto de tablero
-SyncTasks = Sincronizar tareas
-APITokenDesc = Token de autorización para acceder a la API
-ActionToPerform = Acción a realizar
-APIExamples = Ejemplos de API
-Action = Acción
-Description = Descripción
-Example = Ejemplo
-GetProjectsDesc = Obtiene la lista de proyectos de Dolibarr
-GetLinkedBoardsDesc = Obtiene los tableros de Trello vinculados a proyectos
-LinkProjectBoardDesc = Vincula un proyecto de Dolibarr con un tablero de Trello
-UnlinkProjectBoardDesc = Desvincula un proyecto de Dolibarr de su tablero de Trello
-SyncTasksDesc = Sincroniza tareas entre un tablero de Trello y un proyecto de Dolibarr
-RequiredParameters = Parámetros requeridos
-PythonExample = Ejemplo en Python
-ViewAPIDocumentation = Ver documentación de la API
+# Rights
+ReadRights = Leer datos de Trello
+AutomationRights = Administrar automatizaciones
+ConfigRights = Configurar módulo
