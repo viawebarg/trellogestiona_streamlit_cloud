@@ -12,6 +12,7 @@ from gestor_flujo_trabajo import crear_flujo_trabajo, mapear_listas_trello_a_flu
 import db_manager
 import automatizacion_tareas
 import generador_scripts
+from dolibarr_api_client import DolibarrAPIClient, get_dolibarr_client
 
 # Configuración de la página
 st.set_page_config(
@@ -201,7 +202,7 @@ with st.sidebar:
 # Área de contenido principal
 if st.session_state.trello_data is not None:
     # Pestañas para diferentes vistas
-    tab1, tab2, tab3, tab4 = st.tabs(["Panel de Tareas", "Vista de Flujo", "Análisis", "Automatización"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Panel de Tareas", "Vista de Flujo", "Análisis", "Automatización", "Integración Dolibarr"])
     
     # Pestaña Panel de Tareas
     with tab1:
