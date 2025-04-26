@@ -2,317 +2,375 @@ import os
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from trello_api import TrelloAPI
-from data_processor import process_tasks, prioritize_tasks, categorize_tasks
-from workflow_manager import create_workflow, update_task_status
+import json
+import shutil
+from cargar_datos import procesar_todos_los_json, convertir_a_dataframe, priorizar_tareas, categorizar_tareas
+from gestor_flujo_trabajo import crear_flujo_trabajo, mapear_listas_trello_a_flujo_trabajo
 
-# Page configuration
+# Configuración de la página
 st.set_page_config(
-    page_title="Trello Task Manager",
+    page_title="Gestor de Tareas Trello",
     page_icon="📋",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Initialize session state for storing data
+# Inicializa el estado de la sesión para almacenar datos
 if 'trello_data' not in st.session_state:
     st.session_state.trello_data = None
 if 'filtered_data' not in st.session_state:
     st.session_state.filtered_data = None
 if 'workflow_stages' not in st.session_state:
-    st.session_state.workflow_stages = ['To Do', 'In Progress', 'Review', 'Done']
-if 'api_configured' not in st.session_state:
-    st.session_state.api_configured = False
-if 'boards' not in st.session_state:
-    st.session_state.boards = []
-if 'selected_board' not in st.session_state:
-    st.session_state.selected_board = None
+    st.session_state.workflow_stages = ['Por Hacer', 'En Progreso', 'Revisión', 'Completado']
+if 'all_lists' not in st.session_state:
+    st.session_state.all_lists = []
+if 'list_workflow_mapping' not in st.session_state:
+    st.session_state.list_workflow_mapping = {}
+if 'files_processed' not in st.session_state:
+    st.session_state.files_processed = False
 
-# Title and description
-st.title("Trello Task Manager")
-st.write("Efficiently process, organize, and manage your Trello tasks with this streamlined workflow system.")
+# Título y descripción
+st.title("Gestor de Tareas Trello")
+st.write("Procesá, organizá y gestioná tus tareas de Trello de manera eficiente con este sistema de flujo de trabajo simplificado.")
 
-# Sidebar for API configuration and data loading
+# Barra lateral para configuración y carga de datos
 with st.sidebar:
-    st.header("Configuration")
+    st.header("Configuración")
     
-    # API Key and Token inputs
-    trello_api_key = st.text_input("Trello API Key", type="password", value=os.getenv("TRELLO_API_KEY", ""))
-    trello_token = st.text_input("Trello Token", type="password", value=os.getenv("TRELLO_TOKEN", ""))
+    # Asegurarse de que existe la carpeta 'datos'
+    if not os.path.exists('datos'):
+        os.makedirs('datos')
     
-    # Test connection button
-    if st.button("Test Connection"):
-        if trello_api_key and trello_token:
-            trello_api = TrelloAPI(trello_api_key, trello_token)
-            try:
-                boards = trello_api.get_boards()
-                st.session_state.boards = boards
-                st.session_state.api_configured = True
-                st.success("Connection successful! Found {} boards.".format(len(boards)))
-            except Exception as e:
-                st.error(f"Connection failed: {str(e)}")
-        else:
-            st.error("Please enter both API key and token.")
+    # Sección para cargar archivos JSON
+    st.subheader("Cargar archivos JSON de Trello")
     
-    # Board selection (only shown if connection is successful)
-    if st.session_state.api_configured and st.session_state.boards:
-        board_options = {board['name']: board['id'] for board in st.session_state.boards}
-        selected_board_name = st.selectbox("Select Board", list(board_options.keys()))
+    uploaded_files = st.file_uploader("Subí los archivos JSON exportados de Trello", 
+                                     type=['json'], 
+                                     accept_multiple_files=True)
+    
+    if uploaded_files:
+        # Guardar los archivos cargados en la carpeta datos
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join('datos', uploaded_file.name)
+            with open(file_path, 'wb') as f:
+                f.write(uploaded_file.getbuffer())
         
-        if selected_board_name:
-            selected_board_id = board_options[selected_board_name]
-            st.session_state.selected_board = {"id": selected_board_id, "name": selected_board_name}
-            
-            # Load cards button
-            if st.button("Load Tasks"):
-                with st.spinner("Loading tasks from Trello..."):
-                    trello_api = TrelloAPI(trello_api_key, trello_token)
-                    cards = trello_api.get_cards(selected_board_id)
-                    
-                    if cards:
-                        # Process the cards and store in session state
-                        tasks_df = process_tasks(cards)
-                        st.session_state.trello_data = tasks_df
-                        st.session_state.filtered_data = tasks_df.copy()
-                        st.success(f"Successfully loaded {len(tasks_df)} tasks!")
-                    else:
-                        st.warning("No tasks found on this board.")
+        st.success(f"Se subieron {len(uploaded_files)} archivos correctamente.")
+        st.session_state.files_processed = False
     
-    # Export options
-    st.header("Export Options")
+    # Botón para procesar los archivos
+    if st.button("Procesar Tareas"):
+        with st.spinner("Procesando tareas desde archivos JSON..."):
+            # Procesar todos los archivos JSON en la carpeta 'datos'
+            tarjetas = procesar_todos_los_json()
+            
+            if tarjetas:
+                # Convertir a DataFrame y aplicar priorización y categorización
+                tareas_df = convertir_a_dataframe(tarjetas)
+                tareas_df = priorizar_tareas(tareas_df)
+                tareas_df = categorizar_tareas(tareas_df)
+                
+                # Extraer todas las listas únicas para configurar el mapeo de flujo de trabajo
+                todas_las_listas = tareas_df['nombre_lista'].unique().tolist()
+                st.session_state.all_lists = todas_las_listas
+                
+                # Crear mapeo predeterminado de listas a etapas de flujo de trabajo
+                st.session_state.list_workflow_mapping = mapear_listas_trello_a_flujo_trabajo(
+                    todas_las_listas, 
+                    st.session_state.workflow_stages
+                )
+                
+                # Guardar en el estado de la sesión
+                st.session_state.trello_data = tareas_df
+                st.session_state.filtered_data = tareas_df.copy()
+                st.session_state.files_processed = True
+                
+                st.success(f"Se procesaron {len(tareas_df)} tareas exitosamente!")
+            else:
+                st.warning("No se encontraron tareas en los archivos JSON o no hay archivos para procesar.")
+    
+    # Opciones de exportación
     if st.session_state.filtered_data is not None:
-        if st.button("Export to CSV"):
-            csv = st.session_state.filtered_data.to_csv(index=False)
-            st.download_button(
-                label="Download CSV",
-                data=csv,
-                file_name="trello_tasks.csv",
-                mime="text/csv"
-            )
+        st.header("Opciones de Exportación")
         
-        if st.button("Export to Excel"):
-            # Create Excel file in memory
-            buffer = pd.io.excel.BytesIO()
-            with pd.ExcelWriter(buffer) as writer:
-                st.session_state.filtered_data.to_excel(writer, index=False, sheet_name="Tasks")
-            
-            st.download_button(
-                label="Download Excel",
-                data=buffer.getvalue(),
-                file_name="trello_tasks.xlsx",
-                mime="application/vnd.ms-excel"
-            )
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            if st.button("Exportar a CSV"):
+                csv = st.session_state.filtered_data.to_csv(index=False)
+                st.download_button(
+                    label="Descargar CSV",
+                    data=csv,
+                    file_name="tareas_trello.csv",
+                    mime="text/csv"
+                )
+        
+        with col2:
+            if st.button("Exportar a Excel"):
+                # Crear archivo Excel en memoria
+                buffer = pd.io.excel.BytesIO()
+                with pd.ExcelWriter(buffer) as writer:
+                    st.session_state.filtered_data.to_excel(writer, index=False, sheet_name="Tareas")
+                
+                st.download_button(
+                    label="Descargar Excel",
+                    data=buffer.getvalue(),
+                    file_name="tareas_trello.xlsx",
+                    mime="application/vnd.ms-excel"
+                )
 
-# Main content area
+# Área de contenido principal
 if st.session_state.trello_data is not None:
-    # Tabs for different views
-    tab1, tab2, tab3 = st.tabs(["Task Dashboard", "Workflow View", "Analytics"])
+    # Pestañas para diferentes vistas
+    tab1, tab2, tab3 = st.tabs(["Panel de Tareas", "Vista de Flujo", "Análisis"])
     
-    # Task Dashboard Tab
+    # Pestaña Panel de Tareas
     with tab1:
-        st.header("Task Dashboard")
+        st.header("Panel de Tareas")
         
-        # Filters
+        # Filtros
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            # Filter by priority
-            priorities = ['All'] + sorted(st.session_state.trello_data['priority'].unique().tolist())
-            priority_filter = st.multiselect("Filter by Priority", priorities, default='All')
+            # Filtro por prioridad
+            prioridades = ['Todas'] + sorted(st.session_state.trello_data['prioridad'].unique().tolist())
+            filtro_prioridad = st.multiselect("Filtrar por Prioridad", prioridades, default='Todas')
         
         with col2:
-            # Filter by label/category
-            all_labels = []
-            for labels in st.session_state.trello_data['labels'].dropna():
-                if isinstance(labels, list):
-                    all_labels.extend(labels)
-            unique_labels = ['All'] + sorted(list(set(all_labels)))
-            label_filter = st.multiselect("Filter by Label", unique_labels, default='All')
+            # Filtro por etiqueta/categoría
+            todas_etiquetas = []
+            for etiquetas in st.session_state.trello_data['etiquetas'].dropna():
+                if isinstance(etiquetas, list):
+                    todas_etiquetas.extend(etiquetas)
+            etiquetas_unicas = ['Todas'] + sorted(list(set(todas_etiquetas)))
+            filtro_etiqueta = st.multiselect("Filtrar por Etiqueta", etiquetas_unicas, default='Todas')
         
         with col3:
-            # Search by name
-            search_query = st.text_input("Search Tasks", "")
+            # Buscar por nombre
+            consulta_busqueda = st.text_input("Buscar Tareas", "")
         
-        # Apply filters
+        # Aplicar filtros
         filtered_df = st.session_state.trello_data.copy()
         
-        # Priority filter
-        if priority_filter and 'All' not in priority_filter:
-            filtered_df = filtered_df[filtered_df['priority'].isin(priority_filter)]
+        # Filtro de prioridad
+        if filtro_prioridad and 'Todas' not in filtro_prioridad:
+            filtered_df = filtered_df[filtered_df['prioridad'].isin(filtro_prioridad)]
         
-        # Label filter
-        if label_filter and 'All' not in label_filter:
-            filtered_df = filtered_df[filtered_df['labels'].apply(
-                lambda x: isinstance(x, list) and any(label in x for label in label_filter)
+        # Filtro de etiqueta
+        if filtro_etiqueta and 'Todas' not in filtro_etiqueta:
+            filtered_df = filtered_df[filtered_df['etiquetas'].apply(
+                lambda x: isinstance(x, list) and any(etiqueta in x for etiqueta in filtro_etiqueta)
             )]
         
-        # Search filter
-        if search_query:
-            filtered_df = filtered_df[filtered_df['name'].str.contains(search_query, case=False)]
+        # Filtro de búsqueda
+        if consulta_busqueda:
+            filtered_df = filtered_df[filtered_df['nombre'].str.contains(consulta_busqueda, case=False)]
         
-        # Update filtered data in session state
+        # Actualizar datos filtrados en el estado de la sesión
         st.session_state.filtered_data = filtered_df
         
-        # Display filtered tasks
+        # Mostrar tareas filtradas
         if not filtered_df.empty:
-            st.write(f"Showing {len(filtered_df)} tasks")
-            st.dataframe(filtered_df[['name', 'list_name', 'priority', 'labels', 'due_date', 'url']], 
+            st.write(f"Mostrando {len(filtered_df)} tareas")
+            st.dataframe(filtered_df[['nombre', 'nombre_lista', 'prioridad', 'etiquetas', 'fecha_vencimiento', 'url']], 
                          height=400,
                          column_config={
-                             "name": "Task Name",
-                             "list_name": "List",
-                             "priority": "Priority",
-                             "labels": "Labels",
-                             "due_date": "Due Date",
-                             "url": st.column_config.LinkColumn("Trello Link")
+                             "nombre": "Nombre de la Tarea",
+                             "nombre_lista": "Lista",
+                             "prioridad": "Prioridad",
+                             "etiquetas": "Etiquetas",
+                             "fecha_vencimiento": "Fecha de Vencimiento",
+                             "url": st.column_config.LinkColumn("Link a Trello")
                          })
         else:
-            st.warning("No tasks match the current filters.")
+            st.warning("No hay tareas que coincidan con los filtros actuales.")
     
-    # Workflow View Tab
+    # Pestaña Vista de Flujo
     with tab2:
-        st.header("Workflow Management")
+        st.header("Gestión del Flujo de Trabajo")
         
-        # Create columns for each workflow stage
+        # Crear columnas para cada etapa del flujo de trabajo
         columns = st.columns(len(st.session_state.workflow_stages))
         
-        # Display tasks in each column based on their stage
-        for i, stage in enumerate(st.session_state.workflow_stages):
+        # Mostrar tareas en cada columna según su etapa
+        for i, etapa in enumerate(st.session_state.workflow_stages):
             with columns[i]:
-                st.subheader(stage)
-                stage_tasks = filtered_df[filtered_df['list_name'] == stage]
+                st.subheader(etapa)
                 
-                if not stage_tasks.empty:
-                    for _, task in stage_tasks.iterrows():
+                # Aplicar mapeo de listas Trello a etapas del flujo de trabajo
+                if st.session_state.list_workflow_mapping:
+                    # Encontrar las listas de Trello que mapean a esta etapa del flujo
+                    listas_mapeadas = [lista for lista, etapa_mapeada in 
+                                      st.session_state.list_workflow_mapping.items() 
+                                      if etapa_mapeada == etapa]
+                    
+                    # Filtrar tareas que están en cualquiera de las listas mapeadas
+                    tareas_etapa = filtered_df[filtered_df['nombre_lista'].isin(listas_mapeadas)]
+                else:
+                    # Fallback directo si no hay mapeo configurado
+                    tareas_etapa = filtered_df[filtered_df['nombre_lista'] == etapa]
+                
+                if not tareas_etapa.empty:
+                    for _, tarea in tareas_etapa.iterrows():
                         with st.container():
-                            st.markdown(f"**{task['name']}**")
+                            st.markdown(f"**{tarea['nombre']}**")
                             
-                            # Show labels if available
-                            if isinstance(task['labels'], list) and task['labels']:
-                                st.markdown(f"Labels: {', '.join(task['labels'])}")
+                            # Mostrar etiquetas si están disponibles
+                            if isinstance(tarea['etiquetas'], list) and tarea['etiquetas']:
+                                st.markdown(f"Etiquetas: {', '.join(tarea['etiquetas'])}")
                             
-                            # Show due date if available
-                            if pd.notna(task['due_date']):
-                                st.markdown(f"Due: {task['due_date'].strftime('%Y-%m-%d')}")
+                            # Mostrar tablero si está disponible
+                            if 'tablero' in tarea and tarea['tablero']:
+                                st.markdown(f"Tablero: {tarea['tablero']}")
                             
-                            # Buttons for moving tasks
+                            # Mostrar fecha de vencimiento si está disponible
+                            if pd.notna(tarea['fecha_vencimiento']):
+                                st.markdown(f"Vence: {pd.to_datetime(tarea['fecha_vencimiento']).strftime('%d/%m/%Y')}")
+                            
+                            # Mostrar prioridad
+                            prioridad_color = {
+                                'Crítica': 'red',
+                                'Alta': 'orange',
+                                'Media': 'blue',
+                                'Baja': 'green'
+                            }
+                            
+                            color = prioridad_color.get(tarea['prioridad'], 'gray')
+                            st.markdown(f"Prioridad: <span style='color:{color};font-weight:bold'>{tarea['prioridad']}</span>", unsafe_allow_html=True)
+                            
+                            # Botones para mover tareas entre etapas (solo visual, no API)
                             cols = st.columns(2)
                             
-                            # Only show left move button if not the first stage
+                            # Solo mostrar botón de mover a la izquierda si no es la primera etapa
                             if i > 0:
-                                if cols[0].button(f"← Move", key=f"left_{task['id']}"):
-                                    prev_stage = st.session_state.workflow_stages[i-1]
-                                    trello_api = TrelloAPI(trello_api_key, trello_token)
-                                    success = update_task_status(trello_api, task['id'], prev_stage, st.session_state.selected_board['id'])
-                                    if success:
-                                        st.success(f"Moved task to {prev_stage}")
-                                        st.rerun()
+                                if cols[0].button(f"← Mover", key=f"left_{tarea['id']}"):
+                                    prev_etapa = st.session_state.workflow_stages[i-1]
+                                    st.info(f"En la versión completa: Tarea movida a {prev_etapa}")
                             
-                            # Only show right move button if not the last stage
+                            # Solo mostrar botón de mover a la derecha si no es la última etapa
                             if i < len(st.session_state.workflow_stages) - 1:
-                                if cols[1].button(f"Move →", key=f"right_{task['id']}"):
-                                    next_stage = st.session_state.workflow_stages[i+1]
-                                    trello_api = TrelloAPI(trello_api_key, trello_token)
-                                    success = update_task_status(trello_api, task['id'], next_stage, st.session_state.selected_board['id'])
-                                    if success:
-                                        st.success(f"Moved task to {next_stage}")
-                                        st.rerun()
+                                if cols[1].button(f"Mover →", key=f"right_{tarea['id']}"):
+                                    next_etapa = st.session_state.workflow_stages[i+1]
+                                    st.info(f"En la versión completa: Tarea movida a {next_etapa}")
                             
                             st.markdown("---")
                 else:
-                    st.caption("No tasks in this stage")
+                    st.caption("No hay tareas en esta etapa")
     
-    # Analytics Tab
+    # Pestaña de Análisis
     with tab3:
-        st.header("Task Analytics")
+        st.header("Análisis de Tareas")
         
         if not filtered_df.empty:
             col1, col2 = st.columns(2)
             
             with col1:
-                # Tasks by priority
-                priority_counts = filtered_df['priority'].value_counts().reset_index()
-                priority_counts.columns = ['Priority', 'Count']
+                # Tareas por prioridad
+                conteo_prioridad = filtered_df['prioridad'].value_counts().reset_index()
+                conteo_prioridad.columns = ['Prioridad', 'Cantidad']
                 
-                fig1 = px.pie(priority_counts, values='Count', names='Priority', 
-                              title='Tasks by Priority',
+                fig1 = px.pie(conteo_prioridad, values='Cantidad', names='Prioridad', 
+                              title='Tareas por Prioridad',
                               color_discrete_sequence=px.colors.qualitative.Set3)
                 st.plotly_chart(fig1)
             
             with col2:
-                # Tasks by status
-                status_counts = filtered_df['list_name'].value_counts().reset_index()
-                status_counts.columns = ['Status', 'Count']
+                # Tareas por estado/lista
+                conteo_estado = filtered_df['nombre_lista'].value_counts().reset_index()
+                conteo_estado.columns = ['Estado', 'Cantidad']
                 
-                fig2 = px.bar(status_counts, x='Status', y='Count',
-                              title='Tasks by Status',
-                              color='Status',
+                fig2 = px.bar(conteo_estado, x='Estado', y='Cantidad',
+                              title='Tareas por Estado',
+                              color='Estado',
                               color_discrete_sequence=px.colors.qualitative.Pastel)
                 st.plotly_chart(fig2)
             
-            # Tasks by due date (if available)
-            if 'due_date' in filtered_df.columns and filtered_df['due_date'].notna().any():
-                # Filter out rows with NaN due dates
-                due_date_df = filtered_df.dropna(subset=['due_date'])
+            # Tareas por categoría
+            if 'categoria' in filtered_df.columns:
+                conteo_categoria = filtered_df['categoria'].value_counts().reset_index()
+                conteo_categoria.columns = ['Categoría', 'Cantidad']
                 
-                if not due_date_df.empty:
-                    # Convert to datetime if not already
-                    due_date_df['due_date'] = pd.to_datetime(due_date_df['due_date'])
+                fig3 = px.bar(conteo_categoria, x='Categoría', y='Cantidad',
+                              title='Tareas por Categoría',
+                              color='Categoría',
+                              color_discrete_sequence=px.colors.qualitative.Bold)
+                st.plotly_chart(fig3, use_container_width=True)
+            
+            # Tareas por tablero
+            if 'tablero' in filtered_df.columns:
+                conteo_tablero = filtered_df['tablero'].value_counts().reset_index()
+                conteo_tablero.columns = ['Tablero', 'Cantidad']
+                
+                fig4 = px.pie(conteo_tablero, values='Cantidad', names='Tablero', 
+                              title='Distribución de Tareas por Tablero',
+                              color_discrete_sequence=px.colors.qualitative.Vivid)
+                st.plotly_chart(fig4, use_container_width=True)
+            
+            # Tareas por fecha de vencimiento (si está disponible)
+            if 'fecha_vencimiento' in filtered_df.columns and filtered_df['fecha_vencimiento'].notna().any():
+                # Filtrar filas con fechas de vencimiento NaN
+                df_fechas_vencimiento = filtered_df.dropna(subset=['fecha_vencimiento'])
+                
+                if not df_fechas_vencimiento.empty:
+                    # Convertir a datetime si aún no lo es
+                    df_fechas_vencimiento['fecha_vencimiento'] = pd.to_datetime(df_fechas_vencimiento['fecha_vencimiento'])
                     
-                    # Sort by due date
-                    due_date_df = due_date_df.sort_values('due_date')
+                    # Ordenar por fecha de vencimiento
+                    df_fechas_vencimiento = df_fechas_vencimiento.sort_values('fecha_vencimiento')
                     
-                    fig3 = px.timeline(due_date_df, x_start='due_date', y='name',
-                                      color='priority', title='Task Timeline by Due Date',
+                    fig5 = px.timeline(df_fechas_vencimiento, x_start='fecha_vencimiento', y='nombre',
+                                      color='prioridad', title='Línea de Tiempo de Tareas por Fecha de Vencimiento',
                                       color_discrete_sequence=px.colors.qualitative.Pastel)
                     
-                    # Customize layout
-                    fig3.update_yaxes(autorange="reversed")
-                    fig3.update_layout(height=400)
+                    # Personalizar diseño
+                    fig5.update_yaxes(autorange="reversed")
+                    fig5.update_layout(height=400)
                     
-                    st.plotly_chart(fig3, use_container_width=True)
+                    st.plotly_chart(fig5, use_container_width=True)
                 else:
-                    st.info("No tasks with due dates available for timeline visualization.")
+                    st.info("No hay tareas con fechas de vencimiento disponibles para visualización de línea de tiempo.")
             else:
-                st.info("No due dates available for timeline visualization.")
+                st.info("No hay fechas de vencimiento disponibles para visualización de línea de tiempo.")
         else:
-            st.warning("No data available for analytics.")
+            st.warning("No hay datos disponibles para análisis.")
 
 else:
-    # Show instructions when no data is loaded
-    st.info("Welcome to the Trello Task Manager! Follow these steps to get started:")
+    # Mostrar instrucciones cuando no hay datos cargados
+    st.info("¡Bienvenido al Gestor de Tareas Trello! Seguí estos pasos para comenzar:")
     
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("### 1. Connect to Trello")
+        st.markdown("### 1. Cargar archivos JSON")
         st.markdown("""
-        - Enter your Trello API key and token in the sidebar
-        - Test the connection to verify your credentials
+        - Subí los archivos JSON exportados de Trello usando el panel lateral
+        - Podés exportar estos archivos desde tu tablero de Trello
         """)
     
     with col2:
-        st.markdown("### 2. Select a Board")
+        st.markdown("### 2. Procesar los datos")
         st.markdown("""
-        - Choose which Trello board to work with
-        - Load the tasks from that board
+        - Hacé clic en "Procesar Tareas" en el panel lateral
+        - El sistema organizará automáticamente tus tareas
         """)
     
     with col3:
-        st.markdown("### 3. Manage Tasks")
+        st.markdown("### 3. Gestionar tareas")
         st.markdown("""
-        - Filter and sort your tasks
-        - Update task status through the workflow view
-        - Analyze task distribution
-        - Export your organized tasks
+        - Filtrá y ordená tus tareas
+        - Visualizá el flujo de trabajo
+        - Analizá la distribución de tareas
+        - Exportá tus tareas organizadas
         """)
     
     st.markdown("---")
     st.markdown("""
-    ### How to get your Trello API Key and Token
+    ### Cómo exportar tus tableros de Trello en formato JSON
     
-    1. Log in to your Trello account
-    2. Visit: https://trello.com/app-key to get your API key
-    3. Click on the "Token" link on that page to generate a token
-    4. Copy both the API key and token to the sidebar inputs
+    1. Iniciá sesión en tu cuenta de Trello
+    2. Abrí el tablero que querés exportar
+    3. Hacé clic en "Mostrar menú" (arriba a la derecha)
+    4. Seleccioná "Más" y luego "Imprimir y exportar"
+    5. Elegí la opción "Exportar como JSON"
+    6. Guardá el archivo y luego subilo aquí usando el panel lateral
     """)
