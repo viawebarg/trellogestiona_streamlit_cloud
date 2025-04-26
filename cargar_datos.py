@@ -185,12 +185,17 @@ def priorizar_tareas(df):
     # Prioridad basada en fecha de vencimiento
     hoy = pd.Timestamp.now().normalize()
     
+    # Asegurarse de que todas las fechas de vencimiento tengan el mismo formato (sin zona horaria)
+    if 'fecha_vencimiento' in df.columns and df['fecha_vencimiento'].notna().any():
+        # Convertir fechas a datetime sin zona horaria
+        df['fecha_vencimiento'] = pd.to_datetime(df['fecha_vencimiento']).dt.tz_localize(None)
+    
     # Tareas vencidas (fecha de vencimiento en el pasado)
     mascara_vencidas = (df['fecha_vencimiento'].notna()) & (df['fecha_vencimiento'] < hoy)
     df.loc[mascara_vencidas, 'prioridad'] = 'Crítica'
     
     # Vence hoy
-    mascara_vence_hoy = (df['fecha_vencimiento'].notna()) & (df['fecha_vencimiento'] == hoy)
+    mascara_vence_hoy = (df['fecha_vencimiento'].notna()) & (df['fecha_vencimiento'].dt.date == hoy.date())
     df.loc[mascara_vence_hoy, 'prioridad'] = 'Alta'
     
     # Vence dentro de 3 días
