@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Float, Boolean, MetaData, Table, ForeignKey, insert, select, update, delete
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Text, Float, Boolean, MetaData, Table, ForeignKey, insert, update, delete, select, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 import datetime
@@ -33,7 +33,7 @@ def get_engine():
             )
             # Probar la conexión
             with engine.connect() as conn:
-                conn.execute("SELECT 1")
+                conn.execute(select([1]))
             logger.info("Conexión a la base de datos establecida correctamente")
             return engine
         except Exception as e:

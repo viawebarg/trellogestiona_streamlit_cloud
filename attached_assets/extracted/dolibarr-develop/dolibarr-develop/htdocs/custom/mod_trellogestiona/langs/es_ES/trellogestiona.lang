@@ -1,0 +1,38 @@
+# Dolibarr language file - Source file is es_ES - trellogestiona
+Module500000Name = TrelloGestiona
+Module500000Desc = Integración con el gestor de tareas Trello
+TrelloGestiona = TrelloGestiona
+
+# Admin page
+Setup = Configuración
+TrelloGestionaSetup = Configuración del módulo TrelloGestiona
+StreamlitURL = URL de la aplicación Streamlit
+TrelloAPIKey = Clave API de Trello
+TrelloToken = Token de Trello
+SetupSaved = Configuración guardada
+
+# Main menu
+Dashboard = Panel de control
+ProyectosTrello = Proyectos Trello
+Automatización = Automatización
+Configuración = Configuración
+
+# Project tab
+TrelloBoard = Tablero de Trello
+NoTrelloBoardLinked = No hay tablero de Trello vinculado
+LinkToTrello = Vincular con Trello
+ViewBoard = Ver tablero
+Unlink = Desvincular
+LinkDate = Fecha de vinculación
+TrelloBoardView = Vista del tablero de Trello
+
+# Project board page
+ConfirmUnlink = ¿Confirma que desea desvincular este proyecto del tablero de Trello?
+LinkSaved = Vinculación guardada correctamente
+LinkRemoved = Vinculación eliminada correctamente
+NoRecords = No hay registros
+
+# Rights
+ReadRights = Leer datos de Trello
+AutomationRights = Administrar automatizaciones
+ConfigRights = Configurar módulo
