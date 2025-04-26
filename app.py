@@ -239,6 +239,45 @@ if st.session_state.trello_data is not None:
     with tab2:
         st.header("Gestión del Flujo de Trabajo")
         
+        # Sección de configuración del flujo de trabajo
+        with st.expander("Configuración del Flujo de Trabajo"):
+            # Mostrar el flujo de trabajo actual
+            st.subheader("Flujo de Trabajo Actual")
+            st.write(f"Etapas actuales: {', '.join(st.session_state.workflow_stages)}")
+            
+            # Opción para personalizar el flujo de trabajo
+            st.subheader("Personalizar Flujo de Trabajo")
+            etapas_flujo_texto = st.text_area(
+                "Ingresá las etapas del flujo de trabajo separadas por coma",
+                ", ".join(st.session_state.workflow_stages)
+            )
+            
+            nombre_flujo = st.text_input("Nombre para este flujo de trabajo", "Mi Flujo Personalizado")
+            hacer_default = st.checkbox("Establecer como flujo predeterminado")
+            
+            if st.button("Guardar Configuración"):
+                # Procesar las etapas ingresadas
+                etapas_nuevas = [etapa.strip() for etapa in etapas_flujo_texto.split(",") if etapa.strip()]
+                
+                if etapas_nuevas:
+                    # Guardar en la base de datos
+                    db_manager.guardar_configuracion_flujo_trabajo(nombre_flujo, etapas_nuevas, hacer_default)
+                    
+                    # Actualizar el estado de la sesión
+                    st.session_state.workflow_stages = etapas_nuevas
+                    
+                    # Actualizar el mapeo de listas si hay datos
+                    if st.session_state.all_lists:
+                        st.session_state.list_workflow_mapping = mapear_listas_trello_a_flujo_trabajo(
+                            st.session_state.all_lists, 
+                            etapas_nuevas
+                        )
+                    
+                    st.success(f"Flujo de trabajo '{nombre_flujo}' guardado correctamente con {len(etapas_nuevas)} etapas.")
+                    st.rerun()
+                else:
+                    st.error("Por favor, ingresá al menos una etapa para el flujo de trabajo.")
+        
         # Crear columnas para cada etapa del flujo de trabajo
         columns = st.columns(len(st.session_state.workflow_stages))
         
@@ -275,7 +314,8 @@ if st.session_state.trello_data is not None:
                             
                             # Mostrar fecha de vencimiento si está disponible
                             if pd.notna(tarea['fecha_vencimiento']):
-                                st.markdown(f"Vence: {pd.to_datetime(tarea['fecha_vencimiento']).strftime('%d/%m/%Y')}")
+                                fecha_str = pd.to_datetime(tarea['fecha_vencimiento']).strftime('%d/%m/%Y')
+                                st.markdown(f"Vence: {fecha_str}")
                             
                             # Mostrar prioridad
                             prioridad_color = {
@@ -288,20 +328,88 @@ if st.session_state.trello_data is not None:
                             color = prioridad_color.get(tarea['prioridad'], 'gray')
                             st.markdown(f"Prioridad: <span style='color:{color};font-weight:bold'>{tarea['prioridad']}</span>", unsafe_allow_html=True)
                             
-                            # Botones para mover tareas entre etapas (solo visual, no API)
+                            # Botones para mover tareas entre etapas
                             cols = st.columns(2)
                             
                             # Solo mostrar botón de mover a la izquierda si no es la primera etapa
                             if i > 0:
                                 if cols[0].button(f"← Mover", key=f"left_{tarea['id']}"):
+                                    # Implementación real para mover la tarea a una lista diferente
                                     prev_etapa = st.session_state.workflow_stages[i-1]
-                                    st.info(f"En la versión completa: Tarea movida a {prev_etapa}")
+                                    
+                                    # Buscar una lista que corresponda a la etapa anterior
+                                    listas_etapa_anterior = [lista for lista, etapa_mapeada in 
+                                                            st.session_state.list_workflow_mapping.items() 
+                                                            if etapa_mapeada == prev_etapa]
+                                    
+                                    if listas_etapa_anterior:
+                                        # Tomar la primera lista que corresponda a esa etapa
+                                        lista_destino = listas_etapa_anterior[0]
+                                        
+                                        # Encontrar el ID de la lista
+                                        lista_id = None
+                                        if st.session_state.trello_data is not None:
+                                            listas_df = st.session_state.trello_data[
+                                                st.session_state.trello_data['nombre_lista'] == lista_destino
+                                            ]
+                                            if not listas_df.empty:
+                                                for _, tarea_info in listas_df.iterrows():
+                                                    if 'lista_id' in tarea_info:
+                                                        lista_id = tarea_info['lista_id']
+                                                        break
+                                        
+                                        if lista_id:
+                                            # Actualizar la posición de la tarea en la base de datos
+                                            exito, _ = db_manager.actualizar_posicion_tarea(tarea['id'], lista_id)
+                                            if exito:
+                                                st.success(f"Tarea movida a {prev_etapa}")
+                                                st.rerun()
+                                            else:
+                                                st.error("No se pudo mover la tarea. Intenta de nuevo.")
+                                        else:
+                                            st.warning(f"No se encontró el ID de la lista '{lista_destino}'")
+                                    else:
+                                        st.warning(f"No hay listas mapeadas a la etapa '{prev_etapa}'")
                             
                             # Solo mostrar botón de mover a la derecha si no es la última etapa
                             if i < len(st.session_state.workflow_stages) - 1:
                                 if cols[1].button(f"Mover →", key=f"right_{tarea['id']}"):
+                                    # Implementación real para mover la tarea a una lista diferente
                                     next_etapa = st.session_state.workflow_stages[i+1]
-                                    st.info(f"En la versión completa: Tarea movida a {next_etapa}")
+                                    
+                                    # Buscar una lista que corresponda a la etapa siguiente
+                                    listas_etapa_siguiente = [lista for lista, etapa_mapeada in 
+                                                            st.session_state.list_workflow_mapping.items() 
+                                                            if etapa_mapeada == next_etapa]
+                                    
+                                    if listas_etapa_siguiente:
+                                        # Tomar la primera lista que corresponda a esa etapa
+                                        lista_destino = listas_etapa_siguiente[0]
+                                        
+                                        # Encontrar el ID de la lista
+                                        lista_id = None
+                                        if st.session_state.trello_data is not None:
+                                            listas_df = st.session_state.trello_data[
+                                                st.session_state.trello_data['nombre_lista'] == lista_destino
+                                            ]
+                                            if not listas_df.empty:
+                                                for _, tarea_info in listas_df.iterrows():
+                                                    if 'lista_id' in tarea_info:
+                                                        lista_id = tarea_info['lista_id']
+                                                        break
+                                        
+                                        if lista_id:
+                                            # Actualizar la posición de la tarea en la base de datos
+                                            exito, _ = db_manager.actualizar_posicion_tarea(tarea['id'], lista_id)
+                                            if exito:
+                                                st.success(f"Tarea movida a {next_etapa}")
+                                                st.rerun()
+                                            else:
+                                                st.error("No se pudo mover la tarea. Intenta de nuevo.")
+                                        else:
+                                            st.warning(f"No se encontró el ID de la lista '{lista_destino}'")
+                                    else:
+                                        st.warning(f"No hay listas mapeadas a la etapa '{next_etapa}'")
                             
                             st.markdown("---")
                 else:
