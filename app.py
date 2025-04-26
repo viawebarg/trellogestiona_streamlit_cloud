@@ -54,6 +54,12 @@ if 'dolibarr_api_token' not in st.session_state:
 st.title("Gestor de Tareas Trello")
 st.write("Procesá, organizá y gestioná tus tareas de Trello de manera eficiente con este sistema de flujo de trabajo simplificado.")
 
+# Barra de estado para mostrar conexión con Dolibarr
+if st.session_state.dolibarr_url and st.session_state.dolibarr_api_token:
+    st.success(f"✓ Conectado a Dolibarr: {st.session_state.dolibarr_url}", icon="✓")
+else:
+    st.info("ℹ️ Sin conexión con Dolibarr. Configura la conexión en la pestaña 'Integración Dolibarr'.")
+
 # Barra lateral para configuración y carga de datos
 with st.sidebar:
     st.header("Configuración")

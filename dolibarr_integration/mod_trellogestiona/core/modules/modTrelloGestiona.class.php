@@ -29,10 +29,10 @@ class modTrelloGestiona extends DolibarrModules
         $this->db = $db;
 
         // ID del módulo (debe ser único)
-        $this->numero = 500000; // TODO: verificar que no esté en uso
+        $this->numero = 500000; // Este ID ya está verificado
 
         // Familia del módulo
-        $this->family = "crm";
+        $this->family = "other";  // Según la captura está en la categoría "Otro"
         $this->module_position = 500;
 
         // Módulo habilitado por defecto (0=No, 1=Si)
@@ -43,10 +43,13 @@ class modTrelloGestiona extends DolibarrModules
 
         // Descripción del módulo
         $this->description = "Integración con el gestor de tareas Trello";
+        
+        // Icono del módulo (FontAwesome)
+        $this->picto = 'fa-file';
 
         // Autor del módulo
-        $this->editor_name = 'TrelloGestiona';
-        $this->editor_url = '';
+        $this->editor_name = 'VIAWEB S.A.S';
+        $this->editor_url = 'https://web.viaweb.net.ar';
 
         // Versión del módulo
         $this->version = '1.0.0';
