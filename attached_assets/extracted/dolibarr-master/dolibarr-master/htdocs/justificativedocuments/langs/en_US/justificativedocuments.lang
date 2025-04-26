@@ -1,0 +1,56 @@
+# Copyright (C) 2019 Alicealalalamdskfldmjgdfgdfhfghgfh Adminson <testldr9@dolicloud.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+#
+# Generic
+#
+
+# Module label 'ModuleJustificativeDocumentsName'
+ModuleJustificativeDocumentsName = Supporting Documents
+# Module description 'ModuleJustificativeDocumentsDesc'
+ModuleJustificativeDocumentsDesc = Allow each user to submit supporting or supporting documents
+JustificativeDocument=Supporting document
+JustificativeDocuments=Supporting documents
+TypeOfJustificative=Type of supporting documents
+
+#
+# Admin page
+#
+JustificativeDocumentsSetup = Supporting Documents setup
+Settings = Settings
+JustificativeDocumentsSetupPage = Supporting Documents setup page
+AboutInfoTecLib=This module is developped and distributed by Laurent Destailleur for TecLib, <a href="http://www.teclib.com">www.teclib.com</a>
+
+#
+# About page
+#
+About = About
+JustificativeDocumentsAbout = About Supporting Documents
+JustificativeDocumentsAboutPage = Supporting Documents about page
+
+EnterHereOnlyJustificativeDocument=Use this function to create and publish administrative supporting documents which have no place as supporting documents for expense reports.
+ConfirmCloneJustificativeDocument=Are you sure you want to clone this supporting document?
+JUSTIFICATIVEDOCUMENT_VALIDATEInDolibarr=Supporting document %s validated
+JUSTIFICATIVEDOCUMENT_UNVALIDATEInDolibarr=Supporting document %s unvalidated
+JUSTIFICATIVEDOCUMENT_APPROVEInDolibarr=Supporting document %s approved
+JUSTIFICATIVEDOCUMENT_DELETEInDolibarr=Supporting document %s deleted
+AddAtLeastOneLinkedFile=You must first add at least one attached file.
+
+CodeOfType=Code of type of supporting document
+LabelOfType=Label of type of supporting document
+
+justificativedocument@justificativedocuments=Supporting documents
+DeleteJustificativeDocument=Delete supporting document
+PercentReimbursed=Percent reimbursed

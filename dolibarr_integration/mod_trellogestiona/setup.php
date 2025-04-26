@@ -164,6 +164,12 @@ print '<br>';
 print $langs->trans("ModuleHelpConfig");
 print '</div>';
 
+// Enlace a la documentación de la API
+print '<br>';
+print '<div class="tabsAction">';
+print '<a class="butAction" href="'.DOL_URL_ROOT.'/custom/trellogestiona/api/doc.php">'.$langs->trans("ViewAPIDocumentation").'</a>';
+print '</div>';
+
 // Cerrar página
 llxFooter();
 $db->close();
