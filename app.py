@@ -6,6 +6,7 @@ import json
 import shutil
 from cargar_datos import procesar_todos_los_json, convertir_a_dataframe, priorizar_tareas, categorizar_tareas
 from gestor_flujo_trabajo import crear_flujo_trabajo, mapear_listas_trello_a_flujo_trabajo
+import db_manager
 
 # Configuración de la página
 st.set_page_config(
@@ -15,19 +16,27 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# Inicializar la base de datos
+db_status = db_manager.inicializar_db()
+
 # Inicializa el estado de la sesión para almacenar datos
 if 'trello_data' not in st.session_state:
     st.session_state.trello_data = None
 if 'filtered_data' not in st.session_state:
     st.session_state.filtered_data = None
 if 'workflow_stages' not in st.session_state:
-    st.session_state.workflow_stages = ['Por Hacer', 'En Progreso', 'Revisión', 'Completado']
+    # Obtener etapas del flujo de trabajo desde la base de datos
+    etapas_flujo = db_manager.obtener_configuracion_flujo_trabajo()
+    st.session_state.workflow_stages = etapas_flujo
 if 'all_lists' not in st.session_state:
     st.session_state.all_lists = []
 if 'list_workflow_mapping' not in st.session_state:
     st.session_state.list_workflow_mapping = {}
 if 'files_processed' not in st.session_state:
     st.session_state.files_processed = False
+if 'db_initialized' not in st.session_state:
+    st.session_state.db_initialized = True
+    st.success("Base de datos inicializada correctamente.")
 
 # Título y descripción
 st.title("Gestor de Tareas Trello")
@@ -59,7 +68,12 @@ with st.sidebar:
         st.session_state.files_processed = False
     
     # Botón para procesar los archivos
-    if st.button("Procesar Tareas"):
+    col1, col2 = st.columns(2)
+    
+    proceso_json = col1.button("Procesar Tareas (JSON)")
+    guardar_db = col2.button("Guardar en Base de Datos")
+    
+    if proceso_json:
         with st.spinner("Procesando tareas desde archivos JSON..."):
             # Procesar todos los archivos JSON en la carpeta 'datos'
             tarjetas = procesar_todos_los_json()
@@ -85,9 +99,45 @@ with st.sidebar:
                 st.session_state.filtered_data = tareas_df.copy()
                 st.session_state.files_processed = True
                 
-                st.success(f"Se procesaron {len(tareas_df)} tareas exitosamente!")
+                # Mostrar resultados
+                st.success(f"Se procesaron {len(tareas_df)} tareas exitosamente desde archivos JSON!")
             else:
                 st.warning("No se encontraron tareas en los archivos JSON o no hay archivos para procesar.")
+    
+    if guardar_db and st.session_state.files_processed:
+        with st.spinner("Guardando datos en la base de datos..."):
+            try:
+                # Leer cada archivo JSON en la carpeta datos
+                archivos_json = []
+                for archivo in os.listdir('datos'):
+                    if archivo.endswith('.json'):
+                        ruta_completa = os.path.join('datos', archivo)
+                        with open(ruta_completa, 'r', encoding='utf-8') as f:
+                            try:
+                                tablero_json = json.load(f)
+                                archivos_json.append(tablero_json)
+                            except json.JSONDecodeError:
+                                st.error(f"Error al decodificar el archivo JSON: {archivo}")
+                
+                # Guardar en la base de datos
+                tableros, listas, tareas = db_manager.cargar_datos_trello_a_db(archivos_json)
+                
+                # Actualizar mensaje
+                mensaje = f"Datos guardados en base de datos: {tableros} tableros, {listas} listas, {tareas} tareas"
+                st.success(mensaje)
+                
+                # Cargar datos desde la base de datos
+                tareas_db = db_manager.cargar_tareas()
+                if not tareas_db.empty:
+                    st.session_state.trello_data = tareas_db
+                    st.session_state.filtered_data = tareas_db.copy()
+                    
+            except Exception as e:
+                st.error(f"Error al guardar en la base de datos: {str(e)}")
+    
+    # Si no se ha procesado el archivo, mostrar un mensaje
+    if not st.session_state.files_processed and guardar_db:
+        st.warning("Primero debes procesar las tareas desde los archivos JSON.")
     
     # Opciones de exportación
     if st.session_state.filtered_data is not None:
@@ -335,42 +385,89 @@ if st.session_state.trello_data is not None:
             st.warning("No hay datos disponibles para análisis.")
 
 else:
-    # Mostrar instrucciones cuando no hay datos cargados
-    st.info("¡Bienvenido al Gestor de Tareas Trello! Seguí estos pasos para comenzar:")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.markdown("### 1. Cargar archivos JSON")
-        st.markdown("""
-        - Subí los archivos JSON exportados de Trello usando el panel lateral
-        - Podés exportar estos archivos desde tu tablero de Trello
-        """)
-    
-    with col2:
-        st.markdown("### 2. Procesar los datos")
-        st.markdown("""
-        - Hacé clic en "Procesar Tareas" en el panel lateral
-        - El sistema organizará automáticamente tus tareas
-        """)
-    
-    with col3:
-        st.markdown("### 3. Gestionar tareas")
-        st.markdown("""
-        - Filtrá y ordená tus tareas
-        - Visualizá el flujo de trabajo
-        - Analizá la distribución de tareas
-        - Exportá tus tareas organizadas
-        """)
-    
-    st.markdown("---")
-    st.markdown("""
-    ### Cómo exportar tus tableros de Trello en formato JSON
-    
-    1. Iniciá sesión en tu cuenta de Trello
-    2. Abrí el tablero que querés exportar
-    3. Hacé clic en "Mostrar menú" (arriba a la derecha)
-    4. Seleccioná "Más" y luego "Imprimir y exportar"
-    5. Elegí la opción "Exportar como JSON"
-    6. Guardá el archivo y luego subilo aquí usando el panel lateral
-    """)
+    # Verificar si hay datos en la base de datos
+    try:
+        tareas_db = db_manager.cargar_tareas()
+        if not tareas_db.empty:
+            # Mostrar mensaje de que hay datos en la base de datos
+            st.info("¡Hay datos almacenados en la base de datos!")
+            
+            # Botón para cargar datos desde la base de datos
+            if st.button("Cargar datos desde Base de Datos"):
+                with st.spinner("Cargando datos desde la base de datos..."):
+                    st.session_state.trello_data = tareas_db
+                    st.session_state.filtered_data = tareas_db.copy()
+                    st.success(f"Se cargaron {len(tareas_db)} tareas desde la base de datos.")
+                    st.rerun()
+        else:
+            # Mostrar instrucciones cuando no hay datos cargados
+            st.info("¡Bienvenido al Gestor de Tareas Trello! Seguí estos pasos para comenzar:")
+            
+            col1, col2, col3 = st.columns(3)
+            
+            with col1:
+                st.markdown("### 1. Cargar archivos JSON")
+                st.markdown("""
+                - Subí los archivos JSON exportados de Trello usando el panel lateral
+                - Podés exportar estos archivos desde tu tablero de Trello
+                """)
+            
+            with col2:
+                st.markdown("### 2. Procesar los datos")
+                st.markdown("""
+                - Hacé clic en "Procesar Tareas (JSON)" en el panel lateral
+                - El sistema organizará automáticamente tus tareas
+                - Luego guardá los datos en la base de datos para acceso permanente
+                """)
+            
+            with col3:
+                st.markdown("### 3. Gestionar tareas")
+                st.markdown("""
+                - Filtrá y ordená tus tareas
+                - Visualizá el flujo de trabajo
+                - Analizá la distribución de tareas
+                - Exportá tus tareas organizadas
+                """)
+            
+            st.markdown("---")
+            st.markdown("""
+            ### Cómo exportar tus tableros de Trello en formato JSON
+            
+            1. Iniciá sesión en tu cuenta de Trello
+            2. Abrí el tablero que querés exportar
+            3. Hacé clic en "Mostrar menú" (arriba a la derecha)
+            4. Seleccioná "Más" y luego "Imprimir y exportar"
+            5. Elegí la opción "Exportar como JSON"
+            6. Guardá el archivo y luego subilo aquí usando el panel lateral
+            """)
+    except Exception as e:
+        # Mostrar mensaje de error
+        st.error(f"Error al verificar datos en la base de datos: {str(e)}")
+        
+        # Mostrar instrucciones cuando no hay datos cargados
+        st.info("¡Bienvenido al Gestor de Tareas Trello! Seguí estos pasos para comenzar:")
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.markdown("### 1. Cargar archivos JSON")
+            st.markdown("""
+            - Subí los archivos JSON exportados de Trello usando el panel lateral
+            - Podés exportar estos archivos desde tu tablero de Trello
+            """)
+        
+        with col2:
+            st.markdown("### 2. Procesar los datos")
+            st.markdown("""
+            - Hacé clic en "Procesar Tareas (JSON)" en el panel lateral
+            - El sistema organizará automáticamente tus tareas
+            """)
+        
+        with col3:
+            st.markdown("### 3. Gestionar tareas")
+            st.markdown("""
+            - Filtrá y ordená tus tareas
+            - Visualizá el flujo de trabajo
+            - Analizá la distribución de tareas
+            - Exportá tus tareas organizadas
+            """)
