@@ -1,0 +1,335 @@
+/* Tema VIAWEB para Streamlit
+   Basado en la paleta de colores y estilo visual de VIAWEB 
+   Colores principales:
+   - Morado: #543088
+   - Azul medio: #536AAF
+   - Azul oscuro: #0E4895
+   - Blanco: #FFFFFF
+   - Azul claro: #B3BDD7
+*/
+
+/* Importar fuentes */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+/* Estilos globales */
+* {
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Personalización de barra lateral */
+.css-1d391kg, .css-12oz5g7 {
+  background-color: #0E4895 !important;
+}
+
+.css-1d391kg .main-svg {
+  background-color: #0E4895 !important;
+}
+
+/* Personalización de títulos */
+h1, h2, h3 {
+  color: #0E4895 !important;
+  font-weight: 600 !important;
+}
+
+h1 {
+  font-size: 2.5rem !important;
+  border-bottom: 2px solid #543088;
+  padding-bottom: 0.5rem;
+}
+
+h2 {
+  font-size: 1.8rem !important;
+  border-bottom: 1px solid #536AAF;
+  padding-bottom: 0.3rem;
+}
+
+/* Personalización de botones */
+button, .stButton>button {
+  background-color: #0E4895 !important;
+  color: white !important;
+  border-radius: 6px !important;
+  border: none !important;
+  padding: 0.5rem 1rem !important;
+  font-weight: 500 !important;
+  transition: all 0.3s !important;
+}
+
+button:hover, .stButton>button:hover {
+  background-color: #543088 !important;
+  transform: translateY(-2px);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Personalización de tarjetas */
+.stCard, div[data-testid="stVerticalBlock"] > div:has(div.stMarkdown) {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-top: 3px solid #536AAF;
+}
+
+/* Personalización de widgets de entrada */
+input, textarea, select, .stTextInput>div>div>input, .stTextArea>div>div>textarea, .stDateInput>div>div>input {
+  border-radius: 4px !important;
+  border: 1px solid #B3BDD7 !important;
+  padding: 0.5rem !important;
+}
+
+input:focus, textarea:focus, select:focus, .stTextInput>div>div>input:focus, .stTextArea>div>div>textarea:focus {
+  border: 1px solid #543088 !important;
+  box-shadow: 0 0 0 2px rgba(84, 48, 136, 0.2) !important;
+}
+
+/* Personalización de selectbox */
+.stSelectbox label, .stMultiSelect label {
+  color: #0E4895 !important;
+}
+
+/* Personalización de sliders */
+.stSlider input[type="range"] {
+  accent-color: #543088 !important;
+}
+
+/* Personalización de checkboxes y radios */
+.stCheckbox label span, .stRadio label span {
+  color: #0E4895 !important;
+}
+
+.stCheckbox label span::before, .stRadio label span::before {
+  border-color: #536AAF !important;
+}
+
+/* Personalización de gráficos (Plotly) */
+.js-plotly-plot .plotly .modebar {
+  background-color: transparent !important;
+}
+
+.js-plotly-plot .plotly .modebar-btn path {
+  fill: #0E4895 !important;
+}
+
+/* Personalización de dataframes */
+.stDataFrame {
+  font-family: 'Roboto', sans-serif !important;
+}
+
+.stDataFrame table {
+  border-collapse: collapse !important;
+}
+
+.stDataFrame th {
+  background-color: #536AAF !important;
+  color: white !important;
+  font-weight: 500 !important;
+  text-align: left !important;
+  padding: 0.5rem 1rem !important;
+}
+
+.stDataFrame td {
+  padding: 0.5rem 1rem !important;
+  border-bottom: 1px solid #B3BDD7 !important;
+}
+
+.stDataFrame tr:nth-child(even) {
+  background-color: rgba(179, 189, 215, 0.1) !important;
+}
+
+/* Personalización de pestañas */
+.stTabs [data-baseweb="tab-list"] {
+  background-color: transparent !important;
+  border-bottom: 1px solid #B3BDD7 !important;
+}
+
+.stTabs [data-baseweb="tab"] {
+  color: #0E4895 !important;
+  border-bottom: 3px solid transparent !important;
+  transition: all 0.2s !important;
+}
+
+.stTabs [data-baseweb="tab"][aria-selected="true"] {
+  color: #543088 !important;
+  border-bottom-color: #543088 !important;
+  font-weight: 500 !important;
+}
+
+/* Personalización del pie de página */
+footer {
+  border-top: 1px solid #B3BDD7 !important;
+  padding-top: 1rem !important;
+  margin-top: 2rem !important;
+  text-align: center !important;
+}
+
+footer p {
+  color: #536AAF !important;
+  font-size: 0.8rem !important;
+}
+
+/* Personalización para modo oscuro */
+@media (prefers-color-scheme: dark) {
+  .stApp, body {
+    background-color: #121212 !important;
+    color: #FFFFFF !important;
+  }
+  
+  h1, h2, h3, p, span, label {
+    color: #FFFFFF !important;
+  }
+  
+  .stCard, div[data-testid="stVerticalBlock"] > div:has(div.stMarkdown) {
+    background-color: #1E1E1E !important;
+    border-top: 3px solid #536AAF !important;
+  }
+  
+  .stDataFrame th {
+    background-color: #0E4895 !important;
+  }
+  
+  .stDataFrame tr:nth-child(even) {
+    background-color: rgba(14, 72, 149, 0.2) !important;
+  }
+  
+  .stDataFrame td {
+    border-bottom: 1px solid #536AAF !important;
+  }
+}
+
+/* Personalización de cabecera principal */
+.main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  background: linear-gradient(90deg, #0E4895, #543088);
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  color: white;
+}
+
+.main-header h1 {
+  color: white !important;
+  border-bottom: none;
+  margin: 0;
+}
+
+.viaweb-logo {
+  max-width: 120px;
+  height: auto;
+}
+
+/* Personalización de tarjetas de métricas */
+.metric-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  text-align: center;
+  border-top: 3px solid #543088;
+}
+
+.metric-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #543088;
+  margin: 0.5rem 0;
+}
+
+.metric-label {
+  font-size: 1rem;
+  color: #536AAF;
+  font-weight: 500;
+}
+
+/* Personalización para sidebar */
+.sidebar .sidebar-content {
+  background-color: #0E4895;
+}
+
+.sidebar .sidebar-content .stSelectbox select,
+.sidebar .sidebar-content .stMultiSelect select {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.sidebar .sidebar-content h1, 
+.sidebar .sidebar-content h2, 
+.sidebar .sidebar-content h3, 
+.sidebar .sidebar-content label, 
+.sidebar .sidebar-content p {
+  color: white !important;
+}
+
+/* Personalización de gradientes y degradados */
+.gradient-header {
+  background: linear-gradient(90deg, #0E4895, #543088);
+  color: white;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.gradient-header h2 {
+  color: white !important;
+  border-bottom: none;
+  margin: 0;
+}
+
+/* Iconos personalizados */
+.icon-box {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.icon-box .icon {
+  width: 24px;
+  height: 24px;
+  margin-right: 0.5rem;
+  fill: #0E4895;
+}
+
+.icon-box .text {
+  color: #0E4895;
+  font-weight: 500;
+}
+
+/* Personalización de botones de acción */
+.action-button {
+  background: linear-gradient(90deg, #0E4895, #543088) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 1.5rem !important;
+  border-radius: 30px !important;
+  box-shadow: 0 4px 8px rgba(84, 48, 136, 0.3) !important;
+  transition: all 0.3s !important;
+}
+
+.action-button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 12px rgba(84, 48, 136, 0.4) !important;
+}
+
+/* Footer personalizado */
+.viaweb-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 1px solid #B3BDD7;
+}
+
+.viaweb-footer-logo {
+  max-width: 100px;
+  height: auto;
+  margin-right: 1rem;
+}
+
+.viaweb-footer-text {
+  color: #536AAF;
+  font-size: 0.8rem;
+}
