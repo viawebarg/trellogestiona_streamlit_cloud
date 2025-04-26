@@ -1,0 +1,14 @@
+# Archivo de idioma Español para el módulo ViawebTheme
+# Copyright (C) 2024 VIAWEB S.A.S
+
+#
+# Generic
+#
+ModuleViawebThemeName = Tema VIAWEB
+ModuleViawebThemeDesc = Tema visual para Dolibarr con la identidad de VIAWEB
+ViawebThemeSetup = Configuración del tema VIAWEB
+ViawebThemeDescription = Este tema proporciona una experiencia visual personalizada basada en la identidad gráfica de VIAWEB S.A.S., con colores corporativos y mejoras de interfaz.
+Settings = Configuración
+About = Acerca de
+NoConfigurationRequired = No se requiere configuración adicional. El tema se aplica automáticamente al activar el módulo.
+DevelopedBy = Desarrollado por
